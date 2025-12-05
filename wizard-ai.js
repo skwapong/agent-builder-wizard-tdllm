@@ -49,6 +49,42 @@ let generationCancelled = false;
 // Chat response abort controller
 let chatAbortController = null;
 
+// System prompt character limit
+const SYSTEM_PROMPT_MAX_LENGTH = 9000;
+
+// Truncate system prompt to stay within character limit
+function truncateSystemPrompt(prompt) {
+    if (!prompt || prompt.length <= SYSTEM_PROMPT_MAX_LENGTH) {
+        return prompt;
+    }
+
+    console.warn(`⚠️ System prompt exceeds ${SYSTEM_PROMPT_MAX_LENGTH} chars (${prompt.length}), truncating...`);
+
+    // Try to truncate at a natural break point (paragraph, sentence, or word)
+    let truncated = prompt.substring(0, SYSTEM_PROMPT_MAX_LENGTH);
+
+    // Look for last paragraph break
+    const lastParagraph = truncated.lastIndexOf('\n\n');
+    if (lastParagraph > SYSTEM_PROMPT_MAX_LENGTH * 0.7) {
+        truncated = truncated.substring(0, lastParagraph);
+    } else {
+        // Look for last sentence break
+        const lastSentence = truncated.lastIndexOf('. ');
+        if (lastSentence > SYSTEM_PROMPT_MAX_LENGTH * 0.8) {
+            truncated = truncated.substring(0, lastSentence + 1);
+        } else {
+            // Look for last word break
+            const lastSpace = truncated.lastIndexOf(' ');
+            if (lastSpace > SYSTEM_PROMPT_MAX_LENGTH * 0.9) {
+                truncated = truncated.substring(0, lastSpace);
+            }
+        }
+    }
+
+    console.log(`✅ Truncated system prompt to ${truncated.length} chars`);
+    return truncated;
+}
+
 // File attachment state
 let currentAttachment = null;
 
@@ -3393,12 +3429,14 @@ async function generateAgent() {
             }
         }
         if (config.systemPrompt) {
-            agentConfig.systemPrompt = config.systemPrompt;
-            console.log(`✅ System Prompt: ${config.systemPrompt.length} characters`);
+            // Truncate if over limit
+            const truncatedPrompt = truncateSystemPrompt(config.systemPrompt);
+            agentConfig.systemPrompt = truncatedPrompt;
+            console.log(`✅ System Prompt: ${truncatedPrompt.length} characters`);
             // Populate the textarea
             const systemPromptTextarea = document.getElementById('systemPrompt');
             if (systemPromptTextarea) {
-                systemPromptTextarea.value = config.systemPrompt;
+                systemPromptTextarea.value = truncatedPrompt;
                 updateSystemPromptCharCount(); // Update character counter
             }
         }
@@ -4679,7 +4717,7 @@ function generateSystemPrompt(domain) {
         marketing: getTranslation('domain.marketing.prompt')
     };
 
-    agentConfig.systemPrompt = prompts[domain] || prompts.hr;
+    agentConfig.systemPrompt = truncateSystemPrompt(prompts[domain] || prompts.hr);
     document.getElementById('systemPrompt').value = agentConfig.systemPrompt;
     updateSystemPromptCharCount(); // Update character counter
 }
@@ -5227,7 +5265,7 @@ Guide complex sales processes to successful closures while building lasting cust
 
     // Pick a random variation
     const randomIndex = Math.floor(Math.random() * variationsToUse.length);
-    const newPrompt = variationsToUse[randomIndex];
+    const newPrompt = truncateSystemPrompt(variationsToUse[randomIndex]);
 
     // Update the config and UI
     agentConfig.systemPrompt = newPrompt;
@@ -10679,16 +10717,17 @@ function applyRefinedPrompt() {
     if (!window.currentRefinedPrompt) return;
 
     const previousLength = agentConfig.systemPrompt?.length || 0;
-    agentConfig.systemPrompt = window.currentRefinedPrompt;
+    const truncatedPrompt = truncateSystemPrompt(window.currentRefinedPrompt);
+    agentConfig.systemPrompt = truncatedPrompt;
 
     // Update the textarea
     const textarea = document.getElementById('systemPrompt');
     if (textarea) {
-        textarea.value = window.currentRefinedPrompt;
+        textarea.value = truncatedPrompt;
         updateSystemPromptCharCount();
     }
 
-    const newLength = window.currentRefinedPrompt.length;
+    const newLength = truncatedPrompt.length;
     const lengthChange = newLength - previousLength;
     const changeText = lengthChange > 0 ? `+${lengthChange}` : `${lengthChange}`;
 
@@ -10784,13 +10823,14 @@ function applySystemPromptEnhancement() {
     const currentPrompt = agentConfig.systemPrompt || '';
     const enhancement = recommendations.enhanceSystemPrompt;
 
-    // Append enhancement with clear separator
-    agentConfig.systemPrompt = currentPrompt + '\n\n' + enhancement;
+    // Append enhancement with clear separator, then truncate if needed
+    const combinedPrompt = truncateSystemPrompt(currentPrompt + '\n\n' + enhancement);
+    agentConfig.systemPrompt = combinedPrompt;
 
     // Update the textarea
     const textarea = document.getElementById('systemPrompt');
     if (textarea) {
-        textarea.value = agentConfig.systemPrompt;
+        textarea.value = combinedPrompt;
         updateSystemPromptCharCount();
     }
 
@@ -10869,10 +10909,11 @@ async function applyAllRecommendations() {
     // Apply system prompt enhancement (no navigation)
     if (recommendations.enhanceSystemPrompt) {
         const currentPrompt = agentConfig.systemPrompt || '';
-        agentConfig.systemPrompt = currentPrompt + '\n\n' + recommendations.enhanceSystemPrompt;
+        const combinedPrompt = truncateSystemPrompt(currentPrompt + '\n\n' + recommendations.enhanceSystemPrompt);
+        agentConfig.systemPrompt = combinedPrompt;
         const textarea = document.getElementById('systemPrompt');
         if (textarea) {
-            textarea.value = agentConfig.systemPrompt;
+            textarea.value = combinedPrompt;
             updateSystemPromptCharCount();
         }
         actions.push('system prompt');
