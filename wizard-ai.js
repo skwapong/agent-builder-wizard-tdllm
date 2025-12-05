@@ -4722,16 +4722,81 @@ function generateSystemPrompt(domain) {
     updateSystemPromptCharCount(); // Update character counter
 }
 
-// Regenerate System Prompt
-function regenerateSystemPrompt() {
-    showTypingIndicator('Regenerating system prompt...');
+// Regenerate System Prompt using AI based on context
+async function regenerateSystemPrompt() {
+    const description = agentConfig.description || '';
+    const tone = agentConfig.tone || 'professional';
+    const audience = agentConfig.audience || 'general users';
+    const domain = agentConfig.domain || 'custom';
+    const agentName = agentConfig.name || 'AI Assistant';
 
-    setTimeout(() => {
-        const domain = agentConfig.domain || 'custom';
-        generateSystemPromptVariation(domain);
+    if (!description) {
+        showToast('⚠️ Please provide an agent description first (Step 0)', 'warning');
+        return;
+    }
+
+    showTypingIndicator('Regenerating system prompt based on your context...');
+
+    const prompt = `Generate a NEW and DIFFERENT system prompt for an AI agent with these specifications:
+
+**Agent Name:** ${agentName}
+**Domain:** ${domain}
+**Description:** ${description}
+**Tone:** ${tone}
+**Target Audience:** ${audience}
+
+Requirements:
+1. Create a comprehensive system prompt (400-600 words, UNDER 8500 characters)
+2. Make it DIFFERENT from typical prompts - use unique structure and approach
+3. Clearly define the agent's role, expertise, and boundaries
+4. Include specific guidelines for how to interact with users
+5. Match the specified tone and audience
+6. Focus on the specific domain and use case described
+
+Output ONLY the system prompt text - no explanations, no markdown code blocks, just the prompt content.`;
+
+    try {
+        // Reset chat session for fresh context
+        if (typeof tdLlmAPI !== 'undefined') {
+            tdLlmAPI.resetChatSession();
+        }
+
+        wizardStats.aiApiCalls++;
+
+        const response = await sendMessageToAI(prompt, (chunk, fullText) => {
+            updateTypingIndicator(fullText);
+        });
+
         removeTypingIndicator();
-        addChatMessage('assistant', '✅ System prompt regenerated with a new variation! Review in Step 3.');
-    }, 1500);
+
+        if (response) {
+            // Clean up the response
+            let cleanedPrompt = response.trim();
+            // Remove markdown code blocks if present
+            cleanedPrompt = cleanedPrompt.replace(/^```[\w]*\n?/gm, '').replace(/\n?```$/gm, '').trim();
+
+            // Truncate if needed
+            const finalPrompt = truncateSystemPrompt(cleanedPrompt);
+            agentConfig.systemPrompt = finalPrompt;
+
+            const textarea = document.getElementById('systemPrompt');
+            if (textarea) {
+                textarea.value = finalPrompt;
+                updateSystemPromptCharCount();
+            }
+
+            addChatMessage('assistant', `✅ System prompt regenerated! (${finalPrompt.length} characters)\n\nReview the new prompt in the System Prompt field above.`);
+            showToast('✅ System prompt regenerated successfully!', 'success');
+        }
+    } catch (error) {
+        removeTypingIndicator();
+        console.error('Error regenerating system prompt:', error);
+        showToast('❌ Failed to regenerate. Using fallback variation.', 'error');
+
+        // Fallback to variation-based regeneration
+        generateSystemPromptVariation(domain);
+        addChatMessage('assistant', '⚠️ AI regeneration failed. Applied a fallback variation instead.');
+    }
 }
 
 // Generate varied system prompt based on domain
