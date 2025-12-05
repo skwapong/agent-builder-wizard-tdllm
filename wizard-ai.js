@@ -2898,7 +2898,16 @@ function addChatMessage(role, content) {
         messageDiv.innerHTML = `<p class="text-sm text-gray-800"><strong>You:</strong> ${content}</p>`;
     } else {
         messageDiv.className += ' bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100';
-        messageDiv.innerHTML = `<p class="text-sm text-gray-800">${content}</p>`;
+        // Parse markdown for assistant messages
+        let formattedContent = content;
+        if (typeof marked !== 'undefined' && marked.parse) {
+            try {
+                formattedContent = marked.parse(content);
+            } catch (e) {
+                console.warn('Markdown parsing failed:', e);
+            }
+        }
+        messageDiv.innerHTML = `<div class="text-sm text-gray-800 prose-chat">${formattedContent}</div>`;
     }
 
     messagesDiv.appendChild(messageDiv);
@@ -2929,7 +2938,16 @@ function updateTypingIndicator(text) {
     const streamingText = document.getElementById('streamingText');
     if (streamingText) {
         streamingText.classList.remove('hidden');
-        streamingText.innerHTML = text;
+        // Parse markdown for streaming text
+        let formattedText = text;
+        if (typeof marked !== 'undefined' && marked.parse) {
+            try {
+                formattedText = marked.parse(text);
+            } catch (e) {
+                // Fallback to raw text if markdown parsing fails
+            }
+        }
+        streamingText.innerHTML = `<div class="prose-chat">${formattedText}</div>`;
         const messagesDiv = document.getElementById('aiChatMessages');
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
