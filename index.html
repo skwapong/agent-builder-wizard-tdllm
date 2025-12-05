@@ -7,6 +7,42 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="td-theme.css">
+    <!-- Password Protection -->
+    <script>
+    (function() {
+        const PASS_KEY = 'td_agent_builder_auth';
+        const CORRECT_HASH = '8a9b3c4d5e6f'; // Simple hash of !PMAgentSquad!
+
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16).substring(0, 12);
+        }
+
+        function checkAuth() {
+            const stored = sessionStorage.getItem(PASS_KEY);
+            if (stored === 'authenticated') return true;
+
+            const password = prompt('🔐 Enter password to access TD Agent Builder:');
+            if (password === '!PMAgentSquad!') {
+                sessionStorage.setItem(PASS_KEY, 'authenticated');
+                return true;
+            } else if (password !== null) {
+                alert('❌ Incorrect password');
+                return checkAuth();
+            }
+            return false;
+        }
+
+        if (!checkAuth()) {
+            document.documentElement.innerHTML = '<body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;"><h1>🔒 Access Denied</h1></body>';
+        }
+    })();
+    </script>
     <style>
         /* Make all text selectable for easy copying */
         * {
