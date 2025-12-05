@@ -1114,7 +1114,7 @@ Siempre priorizar las relaciones a largo plazo con los clientes sobre las victor
         'step0.tone': 'Quel ton votre agent doit-il avoir ?',
         'step0.audience': 'Qui utilisera cet agent ?',
         'step0.hint': 'Soyez précis ! Incluez ce que l\'agent doit faire, qui l\'utilisera et quelles connaissances il nécessite.',
-        'step0.tip': '<strong>💡 Astuce :</strong> Plus vous fournissez de détails, mieux l'IA peut générer la configuration de votre agent. Incluez des exemples spécifiques de questions que les utilisateurs pourraient poser ou de tâches pour lesquelles ils ont besoin d\'aide.',
+        'step0.tip': '<strong>💡 Astuce :</strong> Plus vous fournissez de détails, mieux l\'IA peut générer la configuration de votre agent. Incluez des exemples spécifiques de questions que les utilisateurs pourraient poser ou de tâches pour lesquelles ils ont besoin d\'aide.',
 
         'tone.professional': 'Professionnel et Formel',
         'tone.friendly': 'Amical et Conversationnel',
