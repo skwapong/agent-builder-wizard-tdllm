@@ -8,10 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="td-theme.css">
     <style>
-        /* Keep buttons clickable */
-        button {
-            cursor: pointer !important;
-            pointer-events: auto !important;
+        /* Make all text selectable for easy copying */
+        * {
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+
+        /* Keep buttons non-selectable for better UX */
+        button, .drag-handle {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .step-content {
@@ -315,7 +325,7 @@
     </div>
 
     <!-- TD LLM API Connection Modal -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden" style="z-index: 10000;">
+    <div id="apiKeyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4">
             <h3 class="text-xl font-bold text-gray-900 mb-4">🔌 TD LLM API Settings</h3>
 
@@ -332,18 +342,65 @@
                 </div>
             </div>
 
-            <!-- Configuration Info -->
-            <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p class="text-sm text-blue-900">
-                    <strong>ℹ️ Configuration:</strong> Agent ID and API settings are configured in the <code class="bg-blue-100 px-1 rounded">.env</code> file on the server.
+            <!-- Agent ID Configuration -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Agent ID (optional)
+                </label>
+                <input
+                    type="text"
+                    id="agentIdInput"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Enter your TD Agent ID or leave blank for server default"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                    If not set here, the proxy server will use the TD_AGENT_ID from .env
+                </p>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    AI Model
+                </label>
+                <select
+                    id="tdModelSelect"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                    <optgroup label="🏆 Recommended">
+                        <option value="anthropic.claude-4.5-sonnet">Claude 4.5 Sonnet - Best Overall</option>
+                        <option value="anthropic.claude-3-5-haiku-20241022-v1:0">Claude 3.5 Haiku - Fast</option>
+                    </optgroup>
+                    <optgroup label="Anthropic Claude">
+                        <option value="anthropic.claude-4-opus">Claude 4 Opus - Highest Capability</option>
+                        <option value="anthropic.claude-4-sonnet">Claude 4 Sonnet</option>
+                        <option value="anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet V2</option>
+                        <option value="anthropic.claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                    </optgroup>
+                    <optgroup label="OpenAI GPT">
+                        <option value="openai.gpt-4o">GPT-4o</option>
+                        <option value="openai.gpt-4o-mini">GPT-4o Mini</option>
+                    </optgroup>
+                    <optgroup label="Google Gemini">
+                        <option value="google.gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="google.gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    </optgroup>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Note: Model selection is for reference. The actual model is configured in your TD Agent.
                 </p>
             </div>
 
             <div class="flex gap-3">
                 <button
+                    id="saveApiConfigBtn"
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                >
+                    Save Settings
+                </button>
+                <button
                     id="testConnectionBtn"
-                    onclick="testApiConnection()"
-                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors cursor-pointer"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 >
                     Test Connection
                 </button>
@@ -351,14 +408,13 @@
 
             <button
                 id="closeApiModalBtn"
-                onclick="hideApiKeyModal()"
-                class="w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors cursor-pointer"
+                class="w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors"
             >
                 Close
             </button>
 
             <p class="text-xs text-gray-500 mt-4 text-center">
-                Powered by Treasure Data LLM API
+                Powered by Treasure Data LLM API • Proxy server running on localhost:3001
             </p>
         </div>
     </div>
