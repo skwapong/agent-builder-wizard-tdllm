@@ -249,7 +249,7 @@ const translations = {
         'chat.placeholder': 'Example: I want to build a campaign planning agent that helps marketers create comprehensive marketing campaigns across multiple channels...',
         'example.text': 'Example: I want to build a campaign planning agent that helps marketers create comprehensive marketing campaigns across multiple channels...',
         'audience.placeholder': 'Example: Company employees, customers, internal team members...',
-        'connected.status': '🟢 Connected to TD LLM API! Using local connection on port 3001. All responses come from TD AI via your TD Agent Foundry installation.',
+        'connected.status': '🟢 Connected to TD LLM API! All responses are powered by Treasure Data AI.',
         'quick.examples': 'Quick Examples:',
         'tip.text': '💡 Tip: The more detail you provide, the better AI can generate your agent configuration. Include specific examples of questions users might ask or tasks they need help with.',
 
@@ -267,7 +267,7 @@ const translations = {
         'sidebar.step3.msg': '🤖 Almost there! Review your agent settings. I\'ve optimized the model and temperature for your use case.',
         'sidebar.step4.msg': '🎉 Excellent! Your agent is ready to deploy. Download the files and follow the Agent Foundry deployment guide.',
         'sidebar.generating': '✨ Asking TD AI to generate your agent configuration...',
-        'sidebar.connected': '🟢 Connected to TD LLM API! Using local connection on port 3001. All responses come from TD AI via your TD Agent Foundry installation.',
+        'sidebar.connected': '🟢 Connected to TD LLM API! All responses are powered by Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Marketing Campaign Planning Hub',
@@ -491,7 +491,7 @@ Use consultative selling approaches and help build long-term customer relationsh
         'chat.placeholder': 'Exemplo: Quero construir um agente de planejamento de campanhas que ajuda profissionais de marketing a criar campanhas abrangentes em múltiplos canais...',
         'example.text': 'Exemplo: Quero construir um agente de planejamento de campanhas que ajuda profissionais de marketing...',
         'audience.placeholder': 'Exemplo: Funcionários da empresa, clientes, membros da equipe interna...',
-        'connected.status': '🟢 Conectado ao TD LLM API! Usando conexão local na porta 3001. Todas as respostas vêm do TD AI através da sua instalação do TD Agent Foundry.',
+        'connected.status': '🟢 Conectado ao TD LLM API! Todas as respostas são alimentadas pelo Treasure Data AI.',
         'quick.examples': 'Exemplos Rápidos:',
         'tip.text': '💡 Dica: Quanto mais detalhes você fornecer, melhor a IA pode gerar a configuração do seu agente. Inclua exemplos específicos de perguntas que os usuários podem fazer ou tarefas com as quais precisam de ajuda.',
 
@@ -509,7 +509,7 @@ Use consultative selling approaches and help build long-term customer relationsh
         'sidebar.step3.msg': '🤖 Quase lá! Revise as configurações do agente. Otimizei o modelo e a temperatura para seu caso de uso.',
         'sidebar.step4.msg': '🎉 Excelente! Seu agente está pronto para implantar. Baixe os arquivos e siga o guia de implantação do Agent Foundry.',
         'sidebar.generating': '✨ Pedindo ao TD AI para gerar a configuração do seu agente...',
-        'sidebar.connected': '🟢 Conectado ao TD LLM API! Usando conexão local na porta 3001. Todas as respostas vêm do TD AI através da sua instalação do TD Agent Foundry.',
+        'sidebar.connected': '🟢 Conectado ao TD LLM API! Todas as respostas são alimentadas pelo Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Hub de Planejamento de Campanhas de Marketing',
@@ -734,7 +734,7 @@ Sempre priorize relacionamentos de longo prazo com clientes em vez de vitórias 
         'chat.placeholder': 'Ejemplo: Quiero construir un agente de planificación de campañas que ayude a los profesionales de marketing a crear campañas integrales en múltiples canales...',
         'example.text': 'Ejemplo: Quiero construir un agente de planificación de campañas que ayude a los profesionales de marketing...',
         'audience.placeholder': 'Ejemplo: Empleados de la empresa, clientes, miembros internos del equipo...',
-        'connected.status': '🟢 ¡Conectado a TD LLM API! Usando conexión local en el puerto 3001. Todas las respuestas provienen de TD AI a través de tu instalación de TD Agent Foundry.',
+        'connected.status': '🟢 ¡Conectado a TD LLM API! Todas las respuestas están alimentadas por Treasure Data AI.',
         'quick.examples': 'Ejemplos Rápidos:',
         'tip.text': '💡 Consejo: Cuantos más detalles proporciones, mejor podrá la IA generar la configuración de tu agente. Incluye ejemplos específicos de preguntas que los usuarios puedan hacer o tareas con las que necesiten ayuda.',
 
@@ -752,7 +752,7 @@ Sempre priorize relacionamentos de longo prazo com clientes em vez de vitórias 
         'sidebar.step3.msg': '🤖 ¡Casi listo! Revisa la configuración del agente. He optimizado el modelo y la temperatura para tu caso de uso.',
         'sidebar.step4.msg': '🎉 ¡Excelente! Tu agente está listo para desplegar. Descarga los archivos y sigue la guía de despliegue de Agent Foundry.',
         'sidebar.generating': '✨ Pidiendo a TD AI que genere la configuración de tu agente...',
-        'sidebar.connected': '🟢 ¡Conectado a TD LLM API! Usando conexión local en el puerto 3001. Todas las respuestas provienen de TD AI a través de tu instalación de TD Agent Foundry.',
+        'sidebar.connected': '🟢 ¡Conectado a TD LLM API! Todas las respuestas están alimentadas por Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Centro de Planificación de Campañas de Marketing',
@@ -988,7 +988,7 @@ Siempre priorizar las relaciones a largo plazo con los clientes sobre las victor
         'chat.placeholder': '例：マルチチャネルでの包括的なマーケティングキャンペーンの作成をマーケターに支援するキャンペーン計画エージェントを構築したいです...',
         'example.text': '例：マーケターが複数のチャネルで包括的なマーケティングキャンペーンを作成するのを支援するキャンペーン計画エージェントを構築したいです...',
         'audience.placeholder': '例：社員、顧客、社内チームメンバー...',
-        'connected.status': '🟢 TD LLM APIに接続しました！ポート3001でローカル接続を使用しています。すべての応答はTD Agent Foundryインストール経由でTD AIから提供されます。',
+        'connected.status': '🟢 TD LLM APIに接続しました！すべての応答はTreasure Data AIによって提供されます。',
         'quick.examples': 'クイック例：',
         'tip.text': '💡 ヒント：詳細を提供するほど、AIはより良いエージェント設定を生成できます。ユーザーが尋ねる可能性のある質問や必要なタスクの具体例を含めてください。',
 
@@ -1006,7 +1006,7 @@ Siempre priorizar las relaciones a largo plazo con los clientes sobre las victor
         'sidebar.step3.msg': '🤖 もう少しです！エージェント設定を確認してください。ユースケースに合わせてモデルと温度を最適化しました。',
         'sidebar.step4.msg': '🎉 完璧です！エージェントのデプロイ準備が整いました。ファイルをダウンロードしてAgent Foundryデプロイメントガイドに従ってください。',
         'sidebar.generating': '✨ TD AIにエージェント設定の生成を依頼しています...',
-        'sidebar.connected': '🟢 TD LLM APIに接続しました！ポート3001でローカル接続を使用しています。すべての応答はTD Agent Foundryインストール経由でTD AIから提供されます。',
+        'sidebar.connected': '🟢 TD LLM APIに接続しました！すべての応答はTreasure Data AIによって提供されます。',
 
         // Domain-specific sample data
         'domain.marketing.name': 'マーケティングキャンペーン計画ハブ',
@@ -1231,7 +1231,7 @@ Siempre priorizar las relaciones a largo plazo con los clientes sobre las victor
         'chat.placeholder': 'Exemple : Je veux créer un agent de planification de campagnes qui aide les professionnels du marketing à créer des campagnes complètes sur plusieurs canaux...',
         'example.text': 'Exemple : Je veux créer un agent de planification de campagnes qui aide les professionnels du marketing...',
         'audience.placeholder': 'Exemple : Employés de l\'entreprise, clients, membres internes de l\'équipe...',
-        'connected.status': '🟢 Connecté à TD LLM API ! Utilisation de la connexion locale sur le port 3001. Toutes les réponses proviennent de TD AI via votre installation TD Agent Foundry.',
+        'connected.status': '🟢 Connecté à TD LLM API ! Toutes les réponses sont alimentées par Treasure Data AI.',
         'quick.examples': 'Exemples Rapides :',
         'tip.text': '💡 Astuce : Plus vous fournissez de détails, mieux l\'IA peut générer la configuration de votre agent. Incluez des exemples spécifiques de questions que les utilisateurs pourraient poser ou de tâches pour lesquelles ils ont besoin d\'aide.',
 
@@ -1249,7 +1249,7 @@ Siempre priorizar las relaciones a largo plazo con los clientes sobre las victor
         'sidebar.step3.msg': '🤖 Presque terminé ! Examinez les paramètres de l\'agent. J\'ai optimisé le modèle et la température pour votre cas d\'utilisation.',
         'sidebar.step4.msg': '🎉 Excellent ! Votre agent est prêt à être déployé. Téléchargez les fichiers et suivez le guide de déploiement Agent Foundry.',
         'sidebar.generating': '✨ Demande à TD AI de générer la configuration de votre agent...',
-        'sidebar.connected': '🟢 Connecté à TD LLM API ! Utilisation de la connexion locale sur le port 3001. Toutes les réponses proviennent de TD AI via votre installation TD Agent Foundry.',
+        'sidebar.connected': '🟢 Connecté à TD LLM API ! Toutes les réponses sont alimentées par Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Centre de Planification de Campagnes Marketing',
@@ -1474,7 +1474,7 @@ Toujours prioriser les relations client à long terme plutôt que les victoires 
         'chat.placeholder': 'Esempio: Voglio creare un agente di pianificazione campagne che aiuti i professionisti del marketing a creare campagne complete su più canali...',
         'example.text': 'Esempio: Voglio creare un agente di pianificazione campagne che aiuti i professionisti del marketing...',
         'audience.placeholder': 'Esempio: Dipendenti aziendali, clienti, membri interni del team...',
-        'connected.status': '🟢 Connesso a TD LLM API! Utilizzo connessione locale sulla porta 3001. Tutte le risposte provengono da TD AI tramite la tua installazione di TD Agent Foundry.',
+        'connected.status': '🟢 Connesso a TD LLM API! Tutte le risposte sono alimentate da Treasure Data AI.',
         'quick.examples': 'Esempi Rapidi:',
         'tip.text': '💡 Suggerimento: Più dettagli fornisci, meglio l\'IA può generare la configurazione del tuo agente. Includi esempi specifici di domande che gli utenti potrebbero fare o compiti per cui hanno bisogno di aiuto.',
 
@@ -1492,7 +1492,7 @@ Toujours prioriser les relations client à long terme plutôt que les victoires 
         'sidebar.step3.msg': '🤖 Quasi fatto! Rivedi le impostazioni dell\'agente. Ho ottimizzato il modello e la temperatura per il tuo caso d\'uso.',
         'sidebar.step4.msg': '🎉 Eccellente! Il tuo agente è pronto per essere distribuito. Scarica i file e segui la guida di distribuzione Agent Foundry.',
         'sidebar.generating': '✨ Sto chiedendo a TD AI di generare la configurazione del tuo agente...',
-        'sidebar.connected': '🟢 Connesso a TD LLM API! Utilizzo connessione locale sulla porta 3001. Tutte le risposte provengono da TD AI tramite la tua installazione di TD Agent Foundry.',
+        'sidebar.connected': '🟢 Connesso a TD LLM API! Tutte le risposte sono alimentate da Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Centro di Pianificazione Campagne Marketing',
@@ -1717,7 +1717,7 @@ Dare sempre priorità alle relazioni clienti a lungo termine rispetto alle vitto
         'chat.placeholder': 'Beispiel: Ich möchte einen Kampagnenplanungs-Agenten erstellen, der Marketingprofis dabei hilft, umfassende Kampagnen über mehrere Kanäle zu erstellen...',
         'example.text': 'Beispiel: Ich möchte einen Kampagnenplanungs-Agenten erstellen, der Marketingprofis hilft...',
         'audience.placeholder': 'Beispiel: Firmenmitarbeiter, Kunden, interne Teammitglieder...',
-        'connected.status': '🟢 Mit TD LLM API verbunden! Verwendung lokaler Verbindung auf Port 3001. Alle Antworten kommen von TD AI über Ihre TD Agent Foundry Installation.',
+        'connected.status': '🟢 Mit TD LLM API verbunden! Alle Antworten werden von Treasure Data AI bereitgestellt.',
         'quick.examples': 'Schnellbeispiele:',
         'tip.text': '💡 Tipp: Je mehr Details Sie angeben, desto besser kann die KI die Konfiguration Ihres Agenten generieren. Fügen Sie spezifische Beispiele für Fragen hinzu, die Benutzer stellen könnten, oder Aufgaben, bei denen sie Hilfe benötigen.',
 
@@ -1735,7 +1735,7 @@ Dare sempre priorità alle relazioni clienti a lungo termine rispetto alle vitto
         'sidebar.step3.msg': '🤖 Fast fertig! Überprüfen Sie die Agenteneinstellungen. Ich habe das Modell und die Temperatur für Ihren Anwendungsfall optimiert.',
         'sidebar.step4.msg': '🎉 Ausgezeichnet! Ihr Agent ist bereit zur Bereitstellung. Laden Sie die Dateien herunter und folgen Sie dem Agent Foundry Bereitstellungsleitfaden.',
         'sidebar.generating': '✨ Bitte TD AI, die Konfiguration Ihres Agenten zu generieren...',
-        'sidebar.connected': '🟢 Mit TD LLM API verbunden! Verwendung lokaler Verbindung auf Port 3001. Alle Antworten kommen von TD AI über Ihre TD Agent Foundry Installation.',
+        'sidebar.connected': '🟢 Mit TD LLM API verbunden! Alle Antworten werden von Treasure Data AI bereitgestellt.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Marketing-Kampagnenplanungszentrum',
@@ -1960,7 +1960,7 @@ Immer langfristige Kundenbeziehungen über kurzfristige Erfolge priorisieren.`
         'chat.placeholder': '예: 마케팅 전문가가 여러 채널에서 포괄적인 캠페인을 만드는 데 도움이 되는 캠페인 계획 에이전트를 만들고 싶습니다...',
         'example.text': '예: 마케팅 전문가를 돕는 캠페인 계획 에이전트를 만들고 싶습니다...',
         'audience.placeholder': '예: 회사 직원, 고객, 내부 팀원...',
-        'connected.status': '🟢 TD LLM API에 연결되었습니다! 포트 3001에서 로컬 연결을 사용합니다. 모든 응답은 TD Agent Foundry 설치를 통해 TD AI에서 제공됩니다.',
+        'connected.status': '🟢 TD LLM API에 연결되었습니다! 모든 응답은 Treasure Data AI에서 제공됩니다.',
         'quick.examples': '빠른 예제:',
         'tip.text': '💡 팁: 더 많은 세부 정보를 제공할수록 AI가 에이전트 구성을 더 잘 생성할 수 있습니다. 사용자가 할 수 있는 구체적인 질문 예시나 도움이 필요한 작업을 포함하세요.',
 
@@ -1978,7 +1978,7 @@ Immer langfristige Kundenbeziehungen über kurzfristige Erfolge priorisieren.`
         'sidebar.step3.msg': '🤖 거의 완료되었습니다! 에이전트 설정을 검토하세요. 사용 사례에 맞게 모델과 온도를 최적화했습니다.',
         'sidebar.step4.msg': '🎉 훌륭합니다! 에이전트가 배포 준비되었습니다. 파일을 다운로드하고 Agent Foundry 배포 가이드를 따르세요.',
         'sidebar.generating': '✨ TD AI에게 에이전트 구성 생성을 요청하는 중...',
-        'sidebar.connected': '🟢 TD LLM API에 연결되었습니다! 포트 3001에서 로컬 연결을 사용합니다. 모든 응답은 TD Agent Foundry 설치를 통해 TD AI에서 제공됩니다.',
+        'sidebar.connected': '🟢 TD LLM API에 연결되었습니다! 모든 응답은 Treasure Data AI에서 제공됩니다.',
 
         // Domain-specific sample data
         'domain.marketing.name': '마케팅 캠페인 계획 허브',
@@ -2203,7 +2203,7 @@ Immer langfristige Kundenbeziehungen über kurzfristige Erfolge priorisieren.`
         'chat.placeholder': 'Voorbeeld: Ik wil een campagne planning agent maken die marketingprofessionals helpt bij het creëren van uitgebreide campagnes over meerdere kanalen...',
         'example.text': 'Voorbeeld: Ik wil een campagne planning agent maken die marketingprofessionals helpt...',
         'audience.placeholder': 'Voorbeeld: Bedrijfsmedewerkers, klanten, interne teamleden...',
-        'connected.status': '🟢 Verbonden met TD LLM API! Gebruik van lokale verbinding op poort 3001. Alle antwoorden komen van TD AI via je TD Agent Foundry installatie.',
+        'connected.status': '🟢 Verbonden met TD LLM API! Alle antwoorden worden aangedreven door Treasure Data AI.',
         'quick.examples': 'Snelle Voorbeelden:',
         'tip.text': '💡 Tip: Hoe meer details je geeft, hoe beter de AI de configuratie van je agent kan genereren. Voeg specifieke voorbeelden toe van vragen die gebruikers kunnen stellen of taken waarmee ze hulp nodig hebben.',
 
@@ -2221,7 +2221,7 @@ Immer langfristige Kundenbeziehungen über kurzfristige Erfolge priorisieren.`
         'sidebar.step3.msg': '🤖 Bijna klaar! Bekijk de agent instellingen. Ik heb het model en de temperatuur geoptimaliseerd voor jouw use case.',
         'sidebar.step4.msg': '🎉 Uitstekend! Je agent is klaar om te implementeren. Download de bestanden en volg de Agent Foundry implementatiegids.',
         'sidebar.generating': '✨ Vraag TD AI om de configuratie van je agent te genereren...',
-        'sidebar.connected': '🟢 Verbonden met TD LLM API! Gebruik van lokale verbinding op poort 3001. Alle antwoorden komen van TD AI via je TD Agent Foundry installatie.',
+        'sidebar.connected': '🟢 Verbonden met TD LLM API! Alle antwoorden worden aangedreven door Treasure Data AI.',
 
         // Domain-specific sample data
         'domain.marketing.name': 'Marketing Campagne Planning Hub',
