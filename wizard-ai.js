@@ -3507,28 +3507,56 @@ async function generateAgent() {
         if (generateBtn) generateBtn.style.display = 'block';
         if (cancelBtn) cancelBtn.style.display = 'none';
 
-        // Fallback to keyword-based generation
-        alert(getTranslation('validation.ai.failed', 'AI generation failed. Using keyword-based generation instead.'));
+        // Determine error type and provide helpful message
+        let errorMessage = '';
+        let errorDetails = '';
 
-        // Detect domain from description
-        const descriptionLower = description.toLowerCase();
-        let domain = agentConfig.domain || 'custom';
-
-        if (!agentConfig.domain) {
-            if (descriptionLower.includes('campaign') || descriptionLower.includes('marketing')) domain = 'marketing';
-            else if (descriptionLower.includes('hr') || descriptionLower.includes('employee')) domain = 'hr';
-            else if (descriptionLower.includes('customer') || descriptionLower.includes('support')) domain = 'support';
-            else if (descriptionLower.includes('it support') || descriptionLower.includes('tech support')) domain = 'it';
-            else if (descriptionLower.includes('sales')) domain = 'sales';
+        if (error.message.includes('valid JSON')) {
+            errorMessage = 'The AI response was not in the expected format.';
+            errorDetails = 'This can happen occasionally. Please try again.';
+        } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+            errorMessage = 'Network error - could not reach the AI service.';
+            errorDetails = 'Check your internet connection and ensure the proxy server is running.';
+        } else if (error.message.includes('401') || error.message.includes('403') || error.message.includes('unauthorized')) {
+            errorMessage = 'Authentication error.';
+            errorDetails = 'Check your API key in the API Settings.';
+        } else if (error.message.includes('429') || error.message.includes('rate')) {
+            errorMessage = 'Rate limit exceeded.';
+            errorDetails = 'Please wait a moment before trying again.';
+        } else if (error.message.includes('500') || error.message.includes('502') || error.message.includes('503')) {
+            errorMessage = 'The AI service is temporarily unavailable.';
+            errorDetails = 'Please try again in a few moments.';
+        } else if (error.message.includes('timeout')) {
+            errorMessage = 'Request timed out.';
+            errorDetails = 'The AI service took too long to respond. Please try again.';
+        } else {
+            errorMessage = 'AI generation failed.';
+            errorDetails = error.message || 'An unexpected error occurred.';
         }
 
-        // Generate using templates as fallback
-        generateKnowledgeBases(domain);
-        generateProjectConfig(domain);
-        generateAgentConfig(domain);
+        // Show error message in chat with retry options
+        addChatMessage('assistant', `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">❌</span>
+                    <div class="flex-1">
+                        <p class="font-semibold text-red-900 mb-1">${errorMessage}</p>
+                        <p class="text-sm text-red-700 mb-3">${errorDetails}</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="autoGenerateAgent()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                                🔄 Retry Generation
+                            </button>
+                            <button onclick="document.getElementById('apiKeyModal').classList.remove('hidden'); testApiConnection();" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                                ⚙️ Check API Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
 
-        removeTypingIndicator();
-        nextStep();
+        // Also show a toast notification
+        showToast('error', errorMessage);
     }
 }
 
