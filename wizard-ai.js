@@ -10503,10 +10503,24 @@ function saveChatInputFromModal() {
 // OPTIMIZE AGENT FUNCTIONS
 // ============================================================================
 
+// Store optimization suggestions for selective application
+window.optimizationSuggestions = [];
+window.originalAgentBeforeOptimize = {};
+
 async function optimizeAgent() {
     const modal = document.getElementById('optimizeModal');
     const loadingDiv = document.getElementById('optimizeLoading');
     const resultsDiv = document.getElementById('optimizationResults');
+
+    // Store original agent state for comparison
+    window.originalAgentBeforeOptimize = {
+        systemPrompt: agentConfig.systemPrompt,
+        temperature: agentConfig.temperature,
+        maxToolsIterations: agentConfig.maxToolsIterations,
+        model: agentConfig.model,
+        knowledgeBasesCount: knowledgeBases.length,
+        outputsCount: outputs.length
+    };
 
     // Show modal and loading state
     modal.classList.remove('hidden');
@@ -10514,8 +10528,13 @@ async function optimizeAgent() {
     resultsDiv.innerHTML = loadingDiv.outerHTML;
 
     try {
-        // Build analysis prompt
-        const analysisPrompt = `You are an AI agent optimization expert. Analyze this agent configuration and provide actionable recommendations to improve it.
+        // Reset chat session for fresh context
+        if (typeof tdLlmAPI !== 'undefined') {
+            tdLlmAPI.resetChatSession();
+        }
+
+        // Build analysis prompt with structured JSON output
+        const analysisPrompt = `You are an AI agent optimization expert. Analyze this agent configuration and provide actionable recommendations.
 
 **Agent Configuration:**
 - Name: ${agentConfig.name}
@@ -10531,185 +10550,438 @@ async function optimizeAgent() {
 ${agentConfig.systemPrompt?.substring(0, 500)}...
 
 **Knowledge Bases:**
-${knowledgeBases.map((kb, i) => `${i + 1}. ${kb.name} (${kb.content?.length || 0} chars)`).join('\n')}
+${knowledgeBases.map((kb, i) => `${i + 1}. ${kb.name} (${kb.content?.length || 0} chars)`).join('\n') || 'None'}
 
 **Outputs:**
-${outputs.map((out, i) => `${i + 1}. ${out.functionName} (${out.outputType})`).join('\n')}
+${outputs.map((out, i) => `${i + 1}. ${out.functionName} (${out.outputType})`).join('\n') || 'None'}
 
-Provide optimization recommendations in the following categories:
-1. **System Prompt** - How to improve clarity, specificity, and effectiveness
-2. **Model Selection** - Is the current model optimal for this use case?
-3. **Temperature & Parameters** - Are temperature and max iterations appropriate?
-4. **Knowledge Bases** - Are they well-organized? Any gaps or redundancies?
-5. **Outputs** - Are the outputs appropriate? Any missing outputs?
-6. **Overall Quality Score** - Rate 0-100 with justification
+**IMPORTANT: Return your response in this EXACT JSON format:**
 
-IMPORTANT: At the end of your analysis, include a JSON block with actionable recommendations in this EXACT format:
-<recommendations>
+\`\`\`json
 {
+  "overallScore": 75,
+  "strengths": [
+    "Clear domain focus",
+    "Good model selection for the use case"
+  ],
+  "suggestions": [
+    {
+      "id": 1,
+      "category": "knowledge_bases",
+      "priority": "high",
+      "title": "Add Performance Metrics KB",
+      "description": "The agent lacks reference data for industry benchmarks",
+      "currentState": "No performance metrics knowledge base",
+      "recommendedAction": "Add a knowledge base covering KPIs, benchmarks, and metrics",
+      "impact": "Enables data-driven recommendations"
+    },
+    {
+      "id": 2,
+      "category": "outputs",
+      "priority": "medium",
+      "title": "Add Visualization Output",
+      "description": "Agent would benefit from chart generation capability",
+      "currentState": "Only text-based outputs",
+      "recommendedAction": "Add Plotly visualization output for metrics",
+      "impact": "Improves user engagement with visual data"
+    }
+  ],
   "addKnowledgeBases": [
-    {"name": "KB Name", "content": "Initial content for this KB covering... (should be substantial, 200-500 words)"}
+    {"name": "Performance Metrics", "content": "Detailed content about metrics and benchmarks..."}
   ],
   "addOutputs": [
     {
-      "outputName": "Human-readable name",
-      "functionName": "function_name_snake_case",
-      "functionDescription": "What this output does",
-      "outputType": "report",
-      "artifactType": "text",
-      "jsonSchema": "{\"type\": \"object\", \"properties\": {\"field\": {\"type\": \"string\"}}}"
+      "outputName": "Performance Chart",
+      "functionName": "generate_performance_chart",
+      "functionDescription": "Generate performance visualization",
+      "outputType": "visualization",
+      "artifactType": "json",
+      "jsonSchema": "{\\"type\\": \\"object\\", \\"properties\\": {\\"data\\": {\\"type\\": \\"array\\"}}}"
     }
   ],
-  "enhanceSystemPrompt": "Additional text to append to the system prompt that addresses the gaps identified...",
+  "enhanceSystemPrompt": "Additional text to improve the system prompt...",
   "adjustParameters": {
-    "temperature": 0.7,
-    "maxToolsIterations": 10
+    "temperature": 0.5,
+    "maxToolsIterations": 5
   }
 }
-</recommendations>
+\`\`\`
 
-FIELD REQUIREMENTS:
-- outputName: User-friendly name (e.g., "Budget Reallocation Plan")
-- functionName: Snake case function name (e.g., "generate_budget_reallocation_plan")
-- outputType: Must be one of: report, visualization, test_plan, custom
-- artifactType: Must be one of: text, json, html, csv
-- jsonSchema: Valid JSON schema as a STRING (use escaped quotes)
+**Categories:** system_prompt, model, parameters, knowledge_bases, outputs, overall
+**Priorities:** high, medium, low
 
-Format your response as HTML with sections using h4 tags, bullet points in ul/li, and use color classes: text-green-600 for positive, text-amber-600 for suggestions, text-red-600 for issues.`;
+Provide 3-6 specific suggestions with clear actionable recommendations.`;
 
         // Call TD LLM API
         const response = await claudeAPI.sendMessage(analysisPrompt, []);
 
-        // Parse recommendations from response
-        let recommendations = null;
-        let displayHTML = response;
+        // Parse JSON from response
+        let analysisData = null;
+        const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/(\{[\s\S]*\})/);
 
-        const recommendationsMatch = response.match(/<recommendations>([\s\S]*?)<\/recommendations>/);
-        if (recommendationsMatch) {
+        if (jsonMatch) {
             try {
-                recommendations = JSON.parse(recommendationsMatch[1].trim());
-                // Remove the JSON block from display
-                displayHTML = response.replace(/<recommendations>[\s\S]*?<\/recommendations>/, '');
+                analysisData = JSON.parse(jsonMatch[1]);
             } catch (e) {
-                console.warn('Failed to parse recommendations JSON:', e);
+                console.warn('Failed to parse optimization JSON:', e);
             }
         }
 
-        // Hide loading, show results with better formatting
-        resultsDiv.innerHTML = `
-            <style>
-                .optimization-analysis h4 {
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    margin: 1.5rem 0 0.75rem 0;
-                    padding-bottom: 0.5rem;
-                    border-bottom: 2px solid #e5e7eb;
-                    color: #1f2937;
-                }
-                .optimization-analysis h4:first-child {
-                    margin-top: 0;
-                }
-                .optimization-analysis ul {
-                    margin: 0.5rem 0 1rem 0;
-                    padding-left: 0;
-                    list-style: none;
-                }
-                .optimization-analysis li {
-                    margin: 0.5rem 0;
-                    padding: 0.75rem 1rem;
-                    background: #f9fafb;
-                    border-left: 3px solid #9ca3af;
-                    border-radius: 0.375rem;
-                    line-height: 1.6;
-                }
-                .optimization-analysis li strong {
-                    display: block;
-                    margin-bottom: 0.25rem;
-                    color: #374151;
-                }
-                .optimization-analysis .text-green-600 {
-                    border-left-color: #10b981 !important;
-                    background: #f0fdf4 !important;
-                }
-                .optimization-analysis .text-amber-600 {
-                    border-left-color: #f59e0b !important;
-                    background: #fffbeb !important;
-                }
-                .optimization-analysis .text-red-600 {
-                    border-left-color: #ef4444 !important;
-                    background: #fef2f2 !important;
-                }
-                .optimization-analysis p {
-                    margin: 0.75rem 0;
-                    line-height: 1.6;
-                }
-            </style>
-            <div class="optimization-analysis prose max-w-none">
-                ${displayHTML}
-            </div>
-            ${recommendations ? `
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">🚀 Quick Actions</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        ${recommendations.addKnowledgeBases && recommendations.addKnowledgeBases.length > 0 ? `
-                            <button onclick="applyKnowledgeBaseRecommendations()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                </svg>
-                                Add ${recommendations.addKnowledgeBases.length} Knowledge Base${recommendations.addKnowledgeBases.length > 1 ? 's' : ''}
-                            </button>
-                        ` : ''}
-                        ${recommendations.addOutputs && recommendations.addOutputs.length > 0 ? `
-                            <button onclick="applyOutputRecommendations()" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                                Add ${recommendations.addOutputs.length} Output${recommendations.addOutputs.length > 1 ? 's' : ''}
-                            </button>
-                        ` : ''}
-                        ${recommendations.enhanceSystemPrompt ? `
-                            <button onclick="applySystemPromptEnhancement()" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Enhance System Prompt
-                            </button>
-                        ` : ''}
-                        ${recommendations.adjustParameters ? `
-                            <button onclick="applyParameterAdjustments()" class="bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                                </svg>
-                                Adjust Parameters
-                            </button>
-                        ` : ''}
-                        <button onclick="applyAllRecommendations()" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 md:col-span-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            Apply All Recommendations
-                        </button>
-                    </div>
-                </div>
-            ` : ''}
-        `;
-
-        // Store recommendations globally for action functions
-        window.currentOptimizationRecommendations = recommendations;
-
-        // Extract and store the quality score
-        const scoreMatch = response.match(/(\d+)\/100/);
-        if (scoreMatch) {
-            window.currentOptimizationScore = parseInt(scoreMatch[1]);
+        if (!analysisData) {
+            throw new Error('Could not parse AI optimization response');
         }
+
+        // Store suggestions globally
+        window.optimizationSuggestions = analysisData.suggestions || [];
+        window.currentOptimizationRecommendations = {
+            addKnowledgeBases: analysisData.addKnowledgeBases || [],
+            addOutputs: analysisData.addOutputs || [],
+            enhanceSystemPrompt: analysisData.enhanceSystemPrompt || '',
+            adjustParameters: analysisData.adjustParameters || null
+        };
+        window.currentOptimizationScore = analysisData.overallScore;
+
+        // Build the user-friendly UI
+        const optimizationHTML = buildOptimizationUI(analysisData);
+        resultsDiv.innerHTML = optimizationHTML;
+
+        // Cache for "Back" navigation
+        window.cachedOptimizationHTML = optimizationHTML;
 
     } catch (error) {
         resultsDiv.innerHTML = `
             <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p class="text-red-900"><strong>❌ Error:</strong> ${error.message}</p>
-                <p class="text-sm text-red-700 mt-2">Please ensure TD LLM API is running and try again.</p>
+                <p class="text-red-900"><strong>Error:</strong> ${error.message}</p>
+                <button onclick="optimizeAgent()" class="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg">
+                    Retry
+                </button>
             </div>
         `;
+    }
+}
+
+function buildOptimizationUI(data) {
+    const { overallScore, strengths, suggestions } = data;
+
+    // Score color
+    const scoreColor = overallScore >= 80 ? 'text-green-600' : overallScore >= 60 ? 'text-amber-600' : 'text-red-600';
+    const scoreBg = overallScore >= 80 ? 'bg-green-100' : overallScore >= 60 ? 'bg-amber-100' : 'bg-red-100';
+
+    // Category icons
+    const categoryIcons = {
+        system_prompt: '📝',
+        model: '🤖',
+        parameters: '⚙️',
+        knowledge_bases: '📚',
+        outputs: '📊',
+        overall: '🎯'
+    };
+
+    // Priority badges
+    const priorityBadges = {
+        high: '<span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">High Priority</span>',
+        medium: '<span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Medium</span>',
+        low: '<span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Low</span>'
+    };
+
+    // Build strengths section
+    const strengthsHTML = strengths && strengths.length > 0 ? `
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <h4 class="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                <span>✅</span> What's Working Well
+            </h4>
+            <ul class="text-sm text-green-700 space-y-1">
+                ${strengths.map(s => `<li class="flex items-start gap-2"><span class="text-green-500">•</span> ${s}</li>`).join('')}
+            </ul>
+        </div>
+    ` : '';
+
+    // Build suggestions section
+    const suggestionsHTML = suggestions && suggestions.length > 0 ? suggestions.map((s, idx) => `
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3 optimization-card" data-optimization-id="${s.id || idx}">
+            <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-lg">${categoryIcons[s.category] || '💡'}</span>
+                        <h5 class="font-semibold text-gray-900">${s.title}</h5>
+                        ${priorityBadges[s.priority] || ''}
+                    </div>
+                    <p class="text-sm text-gray-600">${s.description}</p>
+                </div>
+                <button
+                    onclick="applySingleOptimization(${s.id || idx})"
+                    class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-1"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Apply
+                </button>
+            </div>
+
+            ${s.currentState || s.recommendedAction ? `
+                <div class="bg-gray-50 rounded-lg p-3 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${s.currentState ? `
+                            <div>
+                                <div class="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                                    <span class="text-amber-500">○</span> Current State
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded p-2 text-gray-700">${s.currentState}</div>
+                            </div>
+                        ` : '<div></div>'}
+                        ${s.recommendedAction ? `
+                            <div>
+                                <div class="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                                    <span class="text-green-500">→</span> Recommended
+                                </div>
+                                <div class="bg-green-50 border border-green-200 rounded p-2 text-gray-700">${s.recommendedAction}</div>
+                            </div>
+                        ` : '<div></div>'}
+                    </div>
+                    ${s.impact ? `<p class="text-gray-500 mt-2 italic">Impact: ${s.impact}</p>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `).join('') : '<p class="text-gray-500 text-center py-4">No specific suggestions - your agent looks well-configured!</p>';
+
+    // Count available quick actions
+    const recs = window.currentOptimizationRecommendations || {};
+    const hasKBs = recs.addKnowledgeBases && recs.addKnowledgeBases.length > 0;
+    const hasOutputs = recs.addOutputs && recs.addOutputs.length > 0;
+    const hasPromptEnhancement = recs.enhanceSystemPrompt && recs.enhanceSystemPrompt.length > 0;
+    const hasParams = recs.adjustParameters && (recs.adjustParameters.temperature !== undefined || recs.adjustParameters.maxToolsIterations !== undefined);
+
+    return `
+        <!-- Score Header -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="flex items-center gap-4">
+                <div class="${scoreBg} rounded-full w-16 h-16 flex items-center justify-center">
+                    <span class="${scoreColor} text-2xl font-bold">${overallScore || '--'}</span>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900">Agent Quality Score</h3>
+                    <p class="text-sm text-gray-500">${suggestions?.length || 0} optimization opportunities found</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showOptimizationSummary()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Summary
+                </button>
+            </div>
+        </div>
+
+        <!-- Strengths -->
+        ${strengthsHTML}
+
+        <!-- Suggestions Header -->
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-gray-900 flex items-center gap-2">
+                <span>🚀</span> Optimization Opportunities
+            </h4>
+            ${suggestions && suggestions.length > 0 ? `
+                <button onclick="applyAllOptimizations()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-all text-sm flex items-center gap-2 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Apply All Optimizations
+                </button>
+            ` : ''}
+        </div>
+
+        <!-- Suggestion Cards -->
+        <div class="max-h-72 overflow-y-auto pr-2 mb-4">
+            ${suggestionsHTML}
+        </div>
+
+        <!-- Quick Actions Section -->
+        ${(hasKBs || hasOutputs || hasPromptEnhancement || hasParams) ? `
+            <div class="border-t border-gray-200 pt-4 mt-4">
+                <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>⚡</span> Quick Actions
+                </h4>
+                <div class="grid grid-cols-2 gap-2">
+                    ${hasKBs ? `
+                        <button onclick="applyKnowledgeBaseRecommendations()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center gap-2 border border-blue-200">
+                            <span>📚</span>
+                            Add ${recs.addKnowledgeBases.length} KB${recs.addKnowledgeBases.length > 1 ? 's' : ''}
+                        </button>
+                    ` : ''}
+                    ${hasOutputs ? `
+                        <button onclick="applyOutputRecommendations()" class="bg-green-50 hover:bg-green-100 text-green-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center gap-2 border border-green-200">
+                            <span>📊</span>
+                            Add ${recs.addOutputs.length} Output${recs.addOutputs.length > 1 ? 's' : ''}
+                        </button>
+                    ` : ''}
+                    ${hasPromptEnhancement ? `
+                        <button onclick="applySystemPromptEnhancement()" class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center gap-2 border border-purple-200">
+                            <span>📝</span>
+                            Enhance Prompt
+                        </button>
+                    ` : ''}
+                    ${hasParams ? `
+                        <button onclick="applyParameterAdjustments()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center gap-2 border border-amber-200">
+                            <span>⚙️</span>
+                            Adjust Parameters
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        ` : ''}
+
+        <!-- Footer Actions -->
+        <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+            <button onclick="closeOptimizeModal()" class="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 transition-colors">
+                Close
+            </button>
+        </div>
+    `;
+}
+
+function applySingleOptimization(suggestionId) {
+    const suggestion = window.optimizationSuggestions.find(s => (s.id || window.optimizationSuggestions.indexOf(s)) === suggestionId);
+    if (!suggestion) return;
+
+    const recs = window.currentOptimizationRecommendations || {};
+
+    // Apply based on category
+    switch (suggestion.category) {
+        case 'knowledge_bases':
+            if (recs.addKnowledgeBases && recs.addKnowledgeBases.length > 0) {
+                applyKnowledgeBaseRecommendations();
+            }
+            break;
+        case 'outputs':
+            if (recs.addOutputs && recs.addOutputs.length > 0) {
+                applyOutputRecommendations();
+            }
+            break;
+        case 'system_prompt':
+            if (recs.enhanceSystemPrompt) {
+                applySystemPromptEnhancement();
+            }
+            break;
+        case 'parameters':
+        case 'model':
+            if (recs.adjustParameters) {
+                applyParameterAdjustments();
+            }
+            break;
+        default:
+            showToast(`Applied: ${suggestion.title}`, 'success');
+    }
+
+    // Mark as applied
+    const card = document.querySelector(`[data-optimization-id="${suggestionId}"]`);
+    if (card) {
+        card.classList.add('opacity-50');
+        const btn = card.querySelector('button');
+        if (btn) {
+            btn.innerHTML = '<span class="text-green-500">✓ Applied</span>';
+            btn.disabled = true;
+            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            btn.classList.add('bg-gray-200', 'cursor-not-allowed');
+        }
+    }
+}
+
+function applyAllOptimizations() {
+    const recs = window.currentOptimizationRecommendations;
+    if (!recs) return;
+
+    let appliedCount = 0;
+
+    if (recs.addKnowledgeBases && recs.addKnowledgeBases.length > 0) {
+        applyKnowledgeBaseRecommendations();
+        appliedCount++;
+    }
+    if (recs.addOutputs && recs.addOutputs.length > 0) {
+        applyOutputRecommendations();
+        appliedCount++;
+    }
+    if (recs.enhanceSystemPrompt) {
+        applySystemPromptEnhancement();
+        appliedCount++;
+    }
+    if (recs.adjustParameters) {
+        applyParameterAdjustments();
+        appliedCount++;
+    }
+
+    if (appliedCount > 0) {
+        closeOptimizeModal();
+        showToast(`✅ Applied ${appliedCount} optimization${appliedCount > 1 ? 's' : ''}!`, 'success');
+    } else {
+        showToast('No optimizations to apply', 'info');
+    }
+}
+
+function showOptimizationSummary() {
+    const resultsDiv = document.getElementById('optimizationResults');
+    const recs = window.currentOptimizationRecommendations || {};
+    const score = window.currentOptimizationScore || '--';
+    const original = window.originalAgentBeforeOptimize || {};
+
+    resultsDiv.innerHTML = `
+        <div class="mb-4">
+            <button onclick="backToOptimizations()" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Optimizations
+            </button>
+        </div>
+
+        <h4 class="font-semibold text-gray-900 mb-4">Optimization Summary</h4>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h5 class="font-medium text-gray-700 mb-2">Current State</h5>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>Score: <span class="font-medium">${score}/100</span></li>
+                    <li>Knowledge Bases: ${original.knowledgeBasesCount || 0}</li>
+                    <li>Outputs: ${original.outputsCount || 0}</li>
+                    <li>Temperature: ${original.temperature}</li>
+                    <li>Max Iterations: ${original.maxToolsIterations}</li>
+                </ul>
+            </div>
+            <div class="bg-indigo-50 rounded-lg p-4">
+                <h5 class="font-medium text-indigo-700 mb-2">After Optimizations</h5>
+                <ul class="text-sm text-indigo-600 space-y-1">
+                    <li>Knowledge Bases: ${(original.knowledgeBasesCount || 0) + (recs.addKnowledgeBases?.length || 0)}</li>
+                    <li>Outputs: ${(original.outputsCount || 0) + (recs.addOutputs?.length || 0)}</li>
+                    <li>Temperature: ${recs.adjustParameters?.temperature ?? original.temperature}</li>
+                    <li>Max Iterations: ${recs.adjustParameters?.maxToolsIterations ?? original.maxToolsIterations}</li>
+                    ${recs.enhanceSystemPrompt ? '<li class="text-green-600">+ Enhanced Prompt</li>' : ''}
+                </ul>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <button onclick="backToOptimizations()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
+                Back
+            </button>
+            <button onclick="applyAllOptimizations()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Apply All
+            </button>
+        </div>
+    `;
+}
+
+function backToOptimizations() {
+    if (window.cachedOptimizationHTML) {
+        const resultsDiv = document.getElementById('optimizationResults');
+        if (resultsDiv) {
+            resultsDiv.innerHTML = window.cachedOptimizationHTML;
+        }
+    } else {
+        optimizeAgent();
     }
 }
 
