@@ -4833,11 +4833,54 @@ Output ONLY the system prompt text - no explanations, no markdown code blocks, j
     } catch (error) {
         removeTypingIndicator();
         console.error('Error regenerating system prompt:', error);
-        showToast('❌ Failed to regenerate. Using fallback variation.', 'error');
 
-        // Fallback to variation-based regeneration
-        generateSystemPromptVariation(domain);
-        addChatMessage('assistant', '⚠️ AI regeneration failed. Applied a fallback variation instead.');
+        // Determine error type and provide helpful message
+        let errorMessage = '';
+        let errorDetails = '';
+
+        if (error.message.includes('429') || error.message.includes('rate')) {
+            errorMessage = 'Rate limit exceeded.';
+            errorDetails = 'Please wait a moment before trying again.';
+        } else if (error.message.includes('Proxy') || error.message.includes('proxy')) {
+            errorMessage = 'Proxy server connection issue.';
+            errorDetails = 'Please check that the proxy server is running.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+            errorMessage = 'Network connection issue.';
+            errorDetails = 'Please check your internet connection.';
+        } else {
+            errorMessage = 'Failed to regenerate system prompt.';
+            errorDetails = error.message || 'An unexpected error occurred.';
+        }
+
+        showToast(`❌ ${errorMessage}`, 'error');
+
+        // Show error with retry options instead of applying fallback
+        addChatMessage('assistant', `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <div class="text-red-500 text-xl">⚠️</div>
+                    <div class="flex-1">
+                        <p class="font-medium text-red-800">${errorMessage}</p>
+                        <p class="text-sm text-red-600 mt-1">${errorDetails}</p>
+                        <div class="mt-4 flex gap-3">
+                            <button onclick="regenerateSystemPrompt()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Retry Regeneration
+                            </button>
+                            <button onclick="document.getElementById('apiKeyModal').classList.remove('hidden'); updateApiModalStatus();" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Check API Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
     }
 }
 
