@@ -2631,6 +2631,12 @@ function setupEventListeners() {
     document.getElementById('importConfigBtn')?.addEventListener('click', importAgentConfig);
     document.getElementById('exportConfigBtn')?.addEventListener('click', exportAgentConfig);
 
+    // Saved Agents Repository
+    document.getElementById('saveAgentBtn')?.addEventListener('click', openSaveAgentModal);
+    document.getElementById('savedAgentsBtn')?.addEventListener('click', openSavedAgentsModal);
+    document.getElementById('searchSavedAgents')?.addEventListener('input', filterSavedAgents);
+    document.getElementById('sortSavedAgents')?.addEventListener('change', filterSavedAgents);
+
     // Markdown Preview Toggle
     document.getElementById('toggleSystemPromptPreview')?.addEventListener('click', toggleSystemPromptPreview);
 
@@ -10363,6 +10369,306 @@ function importAgentConfig() {
     };
 
     input.click();
+}
+
+// ============================================================================
+// SAVED AGENTS REPOSITORY
+// ============================================================================
+
+const SAVED_AGENTS_KEY = 'td_agent_builder_saved_agents';
+
+function getSavedAgents() {
+    try {
+        const saved = localStorage.getItem(SAVED_AGENTS_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        console.error('Error reading saved agents:', e);
+        return [];
+    }
+}
+
+function setSavedAgents(agents) {
+    try {
+        localStorage.setItem(SAVED_AGENTS_KEY, JSON.stringify(agents));
+    } catch (e) {
+        console.error('Error saving agents:', e);
+        showToast('Failed to save agents to storage', 'error');
+    }
+}
+
+function openSaveAgentModal() {
+    // Pre-fill with current agent name if available
+    const nameInput = document.getElementById('saveAgentName');
+    const descInput = document.getElementById('saveAgentDescription');
+
+    if (nameInput) {
+        nameInput.value = agentConfig.agentName || agentConfig.projectName || '';
+    }
+    if (descInput) {
+        descInput.value = agentConfig.projectDescription || '';
+    }
+
+    document.getElementById('saveAgentModal')?.classList.remove('hidden');
+}
+
+function closeSaveAgentModal() {
+    document.getElementById('saveAgentModal')?.classList.add('hidden');
+}
+
+function confirmSaveAgent() {
+    const name = document.getElementById('saveAgentName')?.value?.trim();
+    const description = document.getElementById('saveAgentDescription')?.value?.trim();
+    const tagsInput = document.getElementById('saveAgentTags')?.value?.trim();
+
+    if (!name) {
+        showToast('Please enter an agent name', 'warning');
+        return;
+    }
+
+    // Parse tags
+    const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
+    // Create save data (same structure as export)
+    const saveData = {
+        id: `agent_${Date.now()}`,
+        name,
+        description,
+        tags,
+        savedAt: new Date().toISOString(),
+        data: {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            agentConfig: { ...agentConfig },
+            knowledgeBases: [...knowledgeBases],
+            additionalTools: [...additionalTools],
+            outputs: [...outputs],
+            promptVariables: [...promptVariables]
+        }
+    };
+
+    // Add to saved agents
+    const savedAgents = getSavedAgents();
+    savedAgents.unshift(saveData); // Add to beginning
+    setSavedAgents(savedAgents);
+
+    closeSaveAgentModal();
+    showToast(`Agent "${name}" saved to repository`, 'success');
+
+    // Update count if modal is visible
+    updateSavedAgentsCount();
+}
+
+function openSavedAgentsModal() {
+    renderSavedAgentsList();
+    updateSavedAgentsCount();
+    document.getElementById('savedAgentsModal')?.classList.remove('hidden');
+}
+
+function closeSavedAgentsModal() {
+    document.getElementById('savedAgentsModal')?.classList.add('hidden');
+}
+
+function updateSavedAgentsCount() {
+    const count = getSavedAgents().length;
+    const countEl = document.getElementById('savedAgentsCount');
+    if (countEl) {
+        countEl.textContent = count;
+    }
+}
+
+function renderSavedAgentsList() {
+    const container = document.getElementById('savedAgentsList');
+    if (!container) return;
+
+    const agents = getSavedAgents();
+    const searchTerm = document.getElementById('searchSavedAgents')?.value?.toLowerCase() || '';
+    const sortBy = document.getElementById('sortSavedAgents')?.value || 'newest';
+
+    // Filter by search
+    let filtered = agents.filter(agent => {
+        if (!searchTerm) return true;
+        return (
+            agent.name.toLowerCase().includes(searchTerm) ||
+            (agent.description && agent.description.toLowerCase().includes(searchTerm)) ||
+            (agent.tags && agent.tags.some(t => t.toLowerCase().includes(searchTerm)))
+        );
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+        switch (sortBy) {
+            case 'oldest':
+                return new Date(a.savedAt) - new Date(b.savedAt);
+            case 'name':
+                return a.name.localeCompare(b.name);
+            case 'newest':
+            default:
+                return new Date(b.savedAt) - new Date(a.savedAt);
+        }
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <p class="text-lg font-medium">${agents.length === 0 ? 'No saved agents yet' : 'No agents match your search'}</p>
+                <p class="text-sm mt-1">${agents.length === 0 ? 'Save your first agent to see it here' : 'Try a different search term'}</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(agent => `
+        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition-all">
+            <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-gray-900 truncate">${escapeHtml(agent.name)}</h4>
+                    ${agent.description ? `<p class="text-sm text-gray-600 mt-1 line-clamp-2">${escapeHtml(agent.description)}</p>` : ''}
+                    <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                        <span title="Saved on ${new Date(agent.savedAt).toLocaleString()}">
+                            ${formatRelativeTime(agent.savedAt)}
+                        </span>
+                        ${agent.data?.knowledgeBases?.length ? `<span>📚 ${agent.data.knowledgeBases.length} KBs</span>` : ''}
+                        ${agent.data?.agentConfig?.model ? `<span>🤖 ${getModelDisplayName(agent.data.agentConfig.model)}</span>` : ''}
+                    </div>
+                    ${agent.tags && agent.tags.length > 0 ? `
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${agent.tags.map(tag => `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <button onclick="loadSavedAgent('${agent.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded transition-colors">
+                        Load
+                    </button>
+                    <button onclick="deleteSavedAgent('${agent.id}')" class="text-gray-400 hover:text-red-600 p-1 transition-colors" title="Delete">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+}
+
+function getModelDisplayName(modelId) {
+    if (!modelId) return 'Unknown';
+    // Extract a short display name from the model ID
+    const parts = modelId.split('.');
+    if (parts.length >= 2) {
+        return parts[1].split('-').slice(0, 2).join(' ');
+    }
+    return modelId.substring(0, 15);
+}
+
+function filterSavedAgents() {
+    renderSavedAgentsList();
+}
+
+function loadSavedAgent(agentId) {
+    const agents = getSavedAgents();
+    const agent = agents.find(a => a.id === agentId);
+
+    if (!agent || !agent.data) {
+        showToast('Agent not found', 'error');
+        return;
+    }
+
+    // Confirm before loading
+    const confirmed = confirm(`Load "${agent.name}"?\n\nThis will replace your current work.`);
+    if (!confirmed) return;
+
+    try {
+        // Load data (same as import)
+        const importData = agent.data;
+
+        agentConfig = importData.agentConfig || {};
+        knowledgeBases = importData.knowledgeBases || [];
+        additionalTools = importData.additionalTools || [];
+        outputs = importData.outputs || [];
+        promptVariables = importData.promptVariables || [];
+
+        // Update counters
+        kbCounter = knowledgeBases.length;
+        toolCounter = additionalTools.length;
+        outputCounter = outputs.length;
+        variableCounter = promptVariables.length;
+
+        // Populate UI
+        populateFieldsFromConfig();
+        renderKnowledgeBases();
+        renderTools();
+        renderOutputs();
+        renderPromptVariables();
+
+        // Save to auto-save
+        saveToLocalStorage();
+
+        // Update progress
+        updateProgressBar();
+
+        closeSavedAgentsModal();
+        showToast(`Loaded "${agent.name}" successfully`, 'success');
+
+    } catch (error) {
+        console.error('Load error:', error);
+        showToast('Failed to load agent', 'error');
+    }
+}
+
+function deleteSavedAgent(agentId) {
+    const agents = getSavedAgents();
+    const agent = agents.find(a => a.id === agentId);
+
+    if (!agent) {
+        showToast('Agent not found', 'error');
+        return;
+    }
+
+    const confirmed = confirm(`Delete "${agent.name}"?\n\nThis cannot be undone.`);
+    if (!confirmed) return;
+
+    const filtered = agents.filter(a => a.id !== agentId);
+    setSavedAgents(filtered);
+
+    renderSavedAgentsList();
+    updateSavedAgentsCount();
+    showToast(`Deleted "${agent.name}"`, 'info');
+}
+
+function clearAllSavedAgents() {
+    const agents = getSavedAgents();
+
+    if (agents.length === 0) {
+        showToast('No saved agents to clear', 'info');
+        return;
+    }
+
+    const confirmed = confirm(`Delete all ${agents.length} saved agents?\n\nThis cannot be undone.`);
+    if (!confirmed) return;
+
+    setSavedAgents([]);
+    renderSavedAgentsList();
+    updateSavedAgentsCount();
+    showToast('All saved agents cleared', 'info');
 }
 
 // ============================================================================
