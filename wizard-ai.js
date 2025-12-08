@@ -10741,6 +10741,11 @@ async function refineSystemPrompt() {
     resultsDiv.innerHTML = loadingDiv.outerHTML;
 
     try {
+        // Reset chat session for fresh context (important after regeneration)
+        if (typeof tdLlmAPI !== 'undefined') {
+            tdLlmAPI.resetChatSession();
+        }
+
         const refinementPrompt = `You are an expert at writing effective AI agent system prompts. Analyze this system prompt and provide specific, actionable suggestions.
 
 **Current System Prompt:**
