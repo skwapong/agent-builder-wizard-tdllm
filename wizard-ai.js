@@ -10660,6 +10660,10 @@ function closeOptimizeModal() {
 // REFINE SYSTEM PROMPT WITH AI
 // ============================================================================
 
+// Store individual suggestions for selective application
+window.refinementSuggestions = [];
+window.originalPromptBeforeRefine = '';
+
 async function refineSystemPrompt() {
     const modal = document.getElementById('refinePromptModal');
     const loadingDiv = document.getElementById('refinePromptLoading');
@@ -10667,9 +10671,12 @@ async function refineSystemPrompt() {
 
     const currentPrompt = agentConfig.systemPrompt;
     if (!currentPrompt || currentPrompt.trim().length === 0) {
-        showToast('⚠️ Please generate or write a system prompt first', 'warning');
+        showToast('Please generate or write a system prompt first', 'warning');
         return;
     }
+
+    // Store original prompt for comparison
+    window.originalPromptBeforeRefine = currentPrompt;
 
     // Show modal and loading state
     modal.classList.remove('hidden');
@@ -10677,100 +10684,365 @@ async function refineSystemPrompt() {
     resultsDiv.innerHTML = loadingDiv.outerHTML;
 
     try {
-        const refinementPrompt = `You are an expert at writing effective AI agent system prompts. Analyze this system prompt and provide specific, actionable suggestions to improve it.
+        const refinementPrompt = `You are an expert at writing effective AI agent system prompts. Analyze this system prompt and provide specific, actionable suggestions.
 
 **Current System Prompt:**
 ${currentPrompt}
 
 **Agent Context:**
-- Name: ${agentConfig.name}
-- Domain: ${agentConfig.domain}
-- Model: ${agentConfig.model}
-- Temperature: ${agentConfig.temperature}
+- Name: ${agentConfig.name || 'AI Assistant'}
+- Domain: ${agentConfig.domain || 'general'}
 - Character Count: ${currentPrompt.length} / 9000
 
 **Your Task:**
-Analyze the prompt for:
-1. **Clarity & Structure** - Is the role and purpose crystal clear? Is it well-organized?
-2. **Specificity** - Are instructions specific enough? Any vague language?
-3. **Completeness** - Missing important capabilities, constraints, or guidelines?
-4. **Effectiveness** - Will this prompt produce high-quality, consistent outputs?
-5. **Optimization** - Can it be more concise without losing quality?
+Provide a structured analysis with SPECIFIC, ACTIONABLE suggestions. Each suggestion should include the EXACT text to add, modify, or remove.
 
-**Provide:**
-1. **Strengths** - What's working well (2-3 points)
-2. **Issues** - Problems that need fixing (if any)
-3. **Suggestions** - Specific improvements with examples
-4. **Refined Version** - An improved version of the prompt (if improvements needed)
+**IMPORTANT: Return your response in this EXACT JSON format:**
 
-Format as HTML with h4 tags and color classes: text-green-600 for strengths, text-red-600 for issues, text-amber-600 for suggestions.
+\`\`\`json
+{
+  "overallScore": 85,
+  "strengths": [
+    "Clear role definition",
+    "Good structure with sections"
+  ],
+  "suggestions": [
+    {
+      "id": 1,
+      "category": "clarity",
+      "priority": "high",
+      "title": "Add specific expertise areas",
+      "description": "The prompt should list specific skills and knowledge areas",
+      "currentText": "You are an expert assistant",
+      "suggestedText": "You are an expert marketing strategist with deep knowledge in:\\n- Digital advertising (Meta, Google, TikTok)\\n- Campaign optimization and A/B testing\\n- Budget allocation and ROI analysis",
+      "impact": "Makes the agent's expertise more specific and actionable"
+    },
+    {
+      "id": 2,
+      "category": "structure",
+      "priority": "medium",
+      "title": "Add response format guidelines",
+      "description": "Include how the agent should structure responses",
+      "currentText": "",
+      "suggestedText": "\\n\\n## Response Format\\nWhen providing recommendations:\\n1. Start with a brief summary\\n2. List specific action items\\n3. Include relevant metrics or benchmarks",
+      "impact": "Ensures consistent, well-structured responses"
+    }
+  ],
+  "refinedPrompt": "The complete improved version of the system prompt here..."
+}
+\`\`\`
 
-If providing a refined version, wrap it in:
-<refined-prompt>
-...improved prompt here...
-</refined-prompt>`;
+**Categories:** clarity, structure, specificity, completeness, conciseness, tone
+**Priorities:** high, medium, low
+
+Provide 3-6 specific suggestions. Each suggestion MUST have currentText (can be empty for additions) and suggestedText.`;
 
         const response = await claudeAPI.sendMessage(refinementPrompt, []);
 
-        // Check if there's a refined version
-        const refinedMatch = response.match(/<refined-prompt>([\s\S]*?)<\/refined-prompt>/);
-        let hasRefinedVersion = false;
-        let displayHTML = response;
-
-        if (refinedMatch) {
-            hasRefinedVersion = true;
-            const refinedPrompt = refinedMatch[1].trim();
-            window.currentRefinedPrompt = refinedPrompt;
-            // Remove the refined prompt from display (we'll show it as a button)
-            displayHTML = response.replace(/<refined-prompt>[\s\S]*?<\/refined-prompt>/, '');
+        // Parse the JSON response
+        let analysisData;
+        try {
+            const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/(\{[\s\S]*\})/);
+            if (jsonMatch) {
+                analysisData = JSON.parse(jsonMatch[1]);
+            } else {
+                throw new Error('Could not parse AI response');
+            }
+        } catch (parseError) {
+            console.error('Parse error:', parseError);
+            // Fallback to simple display
+            resultsDiv.innerHTML = `
+                <div class="prose max-w-none">
+                    ${response}
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="closeRefinePromptModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg">Close</button>
+                </div>
+            `;
+            return;
         }
 
-        const suggestionsHTML = `
-            <div class="prose max-w-none">
-                ${displayHTML}
-            </div>
-            ${hasRefinedVersion ? `
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">✨ Apply Improvements</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button onclick="previewRefinedPrompt()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            Preview Refined Prompt
-                        </button>
-                        <button onclick="applyRefinedPrompt()" class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Apply Refined Prompt
-                        </button>
-                    </div>
-                </div>
-            ` : `
-                <div class="mt-6 pt-6 border-t border-gray-200 text-center">
-                    <p class="text-green-600 font-medium">✅ Your system prompt looks good! No major improvements needed.</p>
-                    <button onclick="closeRefinePromptModal()" class="mt-3 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                        Close
-                    </button>
-                </div>
-            `}
-        `;
+        // Store suggestions globally
+        window.refinementSuggestions = analysisData.suggestions || [];
+        window.currentRefinedPrompt = analysisData.refinedPrompt || '';
 
+        // Build the user-friendly UI
+        const suggestionsHTML = buildRefinementUI(analysisData);
         resultsDiv.innerHTML = suggestionsHTML;
-
-        // Store the suggestions HTML for back button
-        window.currentRefinementSuggestions = suggestionsHTML;
 
     } catch (error) {
         resultsDiv.innerHTML = `
             <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p class="text-red-900"><strong>❌ Error:</strong> ${error.message}</p>
-                <p class="text-sm text-red-700 mt-2">Please ensure TD LLM API is running and try again.</p>
+                <p class="text-red-900"><strong>Error:</strong> ${error.message}</p>
+                <button onclick="refineSystemPrompt()" class="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg">
+                    Retry
+                </button>
             </div>
         `;
     }
+}
+
+function buildRefinementUI(data) {
+    const { overallScore, strengths, suggestions } = data;
+
+    // Score color
+    const scoreColor = overallScore >= 80 ? 'text-green-600' : overallScore >= 60 ? 'text-amber-600' : 'text-red-600';
+    const scoreBg = overallScore >= 80 ? 'bg-green-100' : overallScore >= 60 ? 'bg-amber-100' : 'bg-red-100';
+
+    // Category icons
+    const categoryIcons = {
+        clarity: '🎯',
+        structure: '📋',
+        specificity: '🔍',
+        completeness: '✅',
+        conciseness: '✂️',
+        tone: '💬'
+    };
+
+    // Priority badges
+    const priorityBadges = {
+        high: '<span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">High Priority</span>',
+        medium: '<span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Medium</span>',
+        low: '<span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Low</span>'
+    };
+
+    // Build strengths section
+    const strengthsHTML = strengths && strengths.length > 0 ? `
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <h4 class="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                <span>✅</span> What's Working Well
+            </h4>
+            <ul class="text-sm text-green-700 space-y-1">
+                ${strengths.map(s => `<li class="flex items-start gap-2"><span class="text-green-500">•</span> ${s}</li>`).join('')}
+            </ul>
+        </div>
+    ` : '';
+
+    // Build suggestions section
+    const suggestionsHTML = suggestions && suggestions.length > 0 ? suggestions.map((s, idx) => `
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3 suggestion-card" data-suggestion-id="${s.id || idx}">
+            <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-lg">${categoryIcons[s.category] || '💡'}</span>
+                        <h5 class="font-semibold text-gray-900">${s.title}</h5>
+                        ${priorityBadges[s.priority] || ''}
+                    </div>
+                    <p class="text-sm text-gray-600">${s.description}</p>
+                </div>
+                <button
+                    onclick="applySingleSuggestion(${s.id || idx})"
+                    class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-1"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Apply
+                </button>
+            </div>
+
+            ${s.currentText || s.suggestedText ? `
+                <div class="bg-gray-50 rounded-lg p-3 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${s.currentText ? `
+                            <div>
+                                <div class="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                                    <span class="text-red-500">−</span> Current
+                                </div>
+                                <div class="bg-red-50 border border-red-200 rounded p-2 text-gray-700 font-mono whitespace-pre-wrap max-h-24 overflow-y-auto">${escapeHtml(s.currentText.substring(0, 200))}${s.currentText.length > 200 ? '...' : ''}</div>
+                            </div>
+                        ` : '<div></div>'}
+                        <div>
+                            <div class="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                                <span class="text-green-500">+</span> Suggested
+                            </div>
+                            <div class="bg-green-50 border border-green-200 rounded p-2 text-gray-700 font-mono whitespace-pre-wrap max-h-24 overflow-y-auto">${escapeHtml((s.suggestedText || '').substring(0, 200))}${(s.suggestedText || '').length > 200 ? '...' : ''}</div>
+                        </div>
+                    </div>
+                    ${s.impact ? `<p class="text-gray-500 mt-2 italic">Impact: ${s.impact}</p>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `).join('') : '<p class="text-gray-500 text-center py-4">No specific suggestions - your prompt looks good!</p>';
+
+    return `
+        <!-- Score Header -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="flex items-center gap-4">
+                <div class="${scoreBg} rounded-full w-16 h-16 flex items-center justify-center">
+                    <span class="${scoreColor} text-2xl font-bold">${overallScore || '--'}</span>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900">Prompt Quality Score</h3>
+                    <p class="text-sm text-gray-500">${suggestions?.length || 0} suggestions found</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showComparisonView()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Compare
+                </button>
+            </div>
+        </div>
+
+        <!-- Strengths -->
+        ${strengthsHTML}
+
+        <!-- Suggestions Header -->
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-gray-900 flex items-center gap-2">
+                <span>💡</span> Improvement Suggestions
+            </h4>
+            ${suggestions && suggestions.length > 0 ? `
+                <button onclick="applyAllSuggestions()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-all text-sm flex items-center gap-2 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Accept All Suggestions
+                </button>
+            ` : ''}
+        </div>
+
+        <!-- Suggestion Cards -->
+        <div class="max-h-80 overflow-y-auto pr-2">
+            ${suggestionsHTML}
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+            <button onclick="closeRefinePromptModal()" class="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 transition-colors">
+                Cancel
+            </button>
+            <div class="flex gap-3">
+                ${window.currentRefinedPrompt ? `
+                    <button onclick="previewRefinedPrompt()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        Preview Full Revision
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function applySingleSuggestion(suggestionId) {
+    const suggestion = window.refinementSuggestions.find(s => (s.id || window.refinementSuggestions.indexOf(s)) === suggestionId);
+    if (!suggestion) return;
+
+    let currentPrompt = agentConfig.systemPrompt;
+
+    if (suggestion.currentText && suggestion.currentText.trim()) {
+        // Replace existing text
+        if (currentPrompt.includes(suggestion.currentText)) {
+            currentPrompt = currentPrompt.replace(suggestion.currentText, suggestion.suggestedText);
+        } else {
+            // If exact match not found, append the suggestion
+            currentPrompt += '\n\n' + suggestion.suggestedText;
+        }
+    } else {
+        // Add new text
+        currentPrompt += '\n\n' + suggestion.suggestedText;
+    }
+
+    // Apply and truncate if needed
+    agentConfig.systemPrompt = truncateSystemPrompt(currentPrompt);
+    document.getElementById('systemPrompt').value = agentConfig.systemPrompt;
+    updateSystemPromptCharCount();
+
+    // Mark suggestion as applied
+    const card = document.querySelector(`[data-suggestion-id="${suggestionId}"]`);
+    if (card) {
+        card.classList.add('opacity-50');
+        card.querySelector('button').innerHTML = '<span class="text-green-500">✓ Applied</span>';
+        card.querySelector('button').disabled = true;
+        card.querySelector('button').classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        card.querySelector('button').classList.add('bg-gray-200', 'cursor-not-allowed');
+    }
+
+    showToast(`Applied: ${suggestion.title}`, 'success');
+}
+
+function applyAllSuggestions() {
+    if (window.currentRefinedPrompt) {
+        // Apply the complete refined version
+        agentConfig.systemPrompt = truncateSystemPrompt(window.currentRefinedPrompt);
+        document.getElementById('systemPrompt').value = agentConfig.systemPrompt;
+        updateSystemPromptCharCount();
+        closeRefinePromptModal();
+        showToast('All suggestions applied!', 'success');
+    } else {
+        // Apply suggestions one by one
+        window.refinementSuggestions.forEach((s, idx) => {
+            applySingleSuggestion(s.id || idx);
+        });
+        setTimeout(() => {
+            closeRefinePromptModal();
+            showToast('All suggestions applied!', 'success');
+        }, 500);
+    }
+}
+
+function showComparisonView() {
+    const resultsDiv = document.getElementById('refinePromptResults');
+    const original = window.originalPromptBeforeRefine || '';
+    const refined = window.currentRefinedPrompt || agentConfig.systemPrompt;
+
+    resultsDiv.innerHTML = `
+        <div class="mb-4">
+            <button onclick="refineSystemPrompt()" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Suggestions
+            </button>
+        </div>
+
+        <h4 class="font-semibold text-gray-900 mb-4">Side-by-Side Comparison</h4>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-red-500 font-bold">−</span>
+                    <span class="font-medium text-gray-700">Original (${original.length} chars)</span>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-xs font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
+                    ${escapeHtml(original)}
+                </div>
+            </div>
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-green-500 font-bold">+</span>
+                    <span class="font-medium text-gray-700">Refined (${refined.length} chars)</span>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-xs font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
+                    ${escapeHtml(refined)}
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+            <button onclick="refineSystemPrompt()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
+                Back
+            </button>
+            <button onclick="applyAllSuggestions()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-md flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Apply Refined Version
+            </button>
+        </div>
+    `;
 }
 
 function closeRefinePromptModal() {
@@ -10780,30 +11052,47 @@ function closeRefinePromptModal() {
 function previewRefinedPrompt() {
     if (!window.currentRefinedPrompt) return;
 
-    const modal = document.getElementById('refinePromptResults');
-    modal.innerHTML = `
-        <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h4 class="text-lg font-semibold text-gray-900 mb-4">📄 Refined System Prompt Preview</h4>
-            <div class="bg-white rounded border border-gray-300 p-4 max-h-96 overflow-y-auto">
-                <pre class="whitespace-pre-wrap text-sm font-mono">${window.currentRefinedPrompt}</pre>
-            </div>
-            <div class="flex gap-3 mt-4">
-                <button onclick="applyRefinedPrompt()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    ✅ Apply This Prompt
-                </button>
-                <button onclick="backToSuggestions()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    ← Back to Suggestions
-                </button>
-            </div>
+    const resultsDiv = document.getElementById('refinePromptResults');
+    resultsDiv.innerHTML = `
+        <div class="mb-4">
+            <button onclick="refineSystemPrompt()" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Suggestions
+            </button>
+        </div>
+
+        <h4 class="font-semibold text-gray-900 mb-3">Complete Refined System Prompt</h4>
+        <p class="text-sm text-gray-500 mb-4">This is the AI's recommended version with all suggestions applied.</p>
+
+        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 max-h-80 overflow-y-auto">
+            <pre class="whitespace-pre-wrap text-sm font-mono text-gray-800">${escapeHtml(window.currentRefinedPrompt)}</pre>
+        </div>
+
+        <div class="mt-2 text-sm text-gray-500">
+            ${window.currentRefinedPrompt.length} / 9000 characters
+        </div>
+
+        <div class="mt-6 flex justify-between">
+            <button onclick="showComparisonView()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Compare with Original
+            </button>
+            <button onclick="applyAllSuggestions()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Apply This Version
+            </button>
         </div>
     `;
 }
 
 function backToSuggestions() {
-    const resultsDiv = document.getElementById('refinePromptResults');
-    if (window.currentRefinementSuggestions) {
-        resultsDiv.innerHTML = window.currentRefinementSuggestions;
-    }
+    refineSystemPrompt(); // Re-run to show suggestions again
 }
 
 function applyRefinedPrompt() {
