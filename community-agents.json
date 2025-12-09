@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2025-12-09T14:18:52.013Z",
+  "lastUpdated": "2025-12-09T14:18:56.949Z",
   "agents": [
     {
       "id": "community_1765289593596_6y4pp9u39",
@@ -157,48 +157,6 @@
             "id": "kb-1",
             "name": "Employee Handbook",
             "content": "# Employee Handbook\n\n## PTO Policy\n- Full-time employees receive 15 days PTO annually\n- PTO accrues monthly at 1.25 days/month\n- Unused PTO carries over up to 5 days\n\n## Benefits\n- Health insurance: Company covers 80% of premium\n- 401k: 4% company match\n- Wellness stipend: $100/month"
-          }
-        ],
-        "additionalTools": [],
-        "outputs": [],
-        "promptVariables": []
-      }
-    },
-    {
-      "id": "community_3",
-      "name": "Customer Support Agent",
-      "description": "Handles customer inquiries, troubleshooting, and support tickets. Trained on product documentation and common issues.",
-      "author": "TD Agent Builder Team",
-      "tags": [
-        "support",
-        "customer-service",
-        "helpdesk",
-        "troubleshooting"
-      ],
-      "downloads": 0,
-      "publishedAt": "2024-12-09T00:00:00Z",
-      "data": {
-        "version": "1.0",
-        "agentConfig": {
-          "domain": "support",
-          "agentName": "Customer Support Agent",
-          "projectName": "Customer Support System",
-          "projectDescription": "AI-powered customer support for product inquiries and troubleshooting",
-          "model": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-          "temperature": 0.5,
-          "maxToolsIterations": 3,
-          "systemPrompt": "You are a Customer Support Agent, providing helpful and friendly assistance to customers.\n\n## Your Mission\n\nProvide excellent customer support by:\n- Answering product questions accurately\n- Troubleshooting issues step-by-step\n- Escalating complex issues appropriately\n- Ensuring customer satisfaction\n\n## Communication Style\n\n- Friendly and empathetic\n- Clear and concise explanations\n- Patient with frustrated customers\n- Professional at all times\n\n## Support Process\n\n1. Greet the customer warmly\n2. Understand their issue fully before responding\n3. Provide clear, step-by-step solutions\n4. Confirm the issue is resolved\n5. Ask if there's anything else you can help with"
-        },
-        "knowledgeBases": [
-          {
-            "id": "kb-1",
-            "name": "Product Documentation",
-            "content": "# Product Documentation\n\n## Getting Started\n- Account setup takes 5 minutes\n- Supported browsers: Chrome, Firefox, Safari\n- Mobile apps available for iOS and Android\n\n## Common Issues\n- Login problems: Clear cache and cookies\n- Slow performance: Check internet connection\n- Missing features: Verify subscription tier"
-          },
-          {
-            "id": "kb-2",
-            "name": "Troubleshooting Guide",
-            "content": "# Troubleshooting Guide\n\n## Password Reset\n1. Click 'Forgot Password' on login page\n2. Enter your email address\n3. Check inbox for reset link\n4. Create new password (8+ characters)\n\n## Billing Issues\n- Contact billing@company.com\n- Include invoice number\n- Allow 2-3 business days for response"
           }
         ],
         "additionalTools": [],
