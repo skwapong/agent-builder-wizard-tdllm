@@ -2622,11 +2622,6 @@ function setupEventListeners() {
     document.getElementById('saveApiConfigBtn')?.addEventListener('click', saveApiSettings);
     document.getElementById('testConnectionBtn')?.addEventListener('click', testApiConnection);
 
-    // Templates
-    document.getElementById('templatesBtn')?.addEventListener('click', showTemplatesModal);
-    document.getElementById('closeTemplatesModalBtn')?.addEventListener('click', hideTemplatesModal);
-    document.getElementById('cancelTemplateBtn')?.addEventListener('click', hideTemplatesModal);
-
     // Collaboration (Import/Export)
     document.getElementById('importConfigBtn')?.addEventListener('click', importAgentConfig);
     document.getElementById('exportConfigBtn')?.addEventListener('click', exportAgentConfig);
@@ -10110,115 +10105,8 @@ function updateProgressBar() {
 }
 
 // ============================================================================
-// AGENT TEMPLATES
+// CONFIGURATION HELPERS
 // ============================================================================
-// Templates are loaded from agent-templates.js
-// This allows for easier maintenance and community contributions
-
-function showTemplatesModal() {
-    const modal = document.getElementById('templatesModal');
-    const grid = document.getElementById('templatesGrid');
-
-    if (!modal || !grid) return;
-
-    // Clear existing templates
-    grid.innerHTML = '';
-
-    // Populate templates
-    const templates = window.agentTemplates || [];
-    templates.forEach(template => {
-        const card = document.createElement('div');
-        card.className = 'template-card bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-indigo-500 transition-all';
-        card.innerHTML = `
-            <div class="text-4xl mb-2">${template.icon}</div>
-            <h4 class="font-bold text-gray-900 mb-1">${template.name}</h4>
-            <p class="text-sm text-gray-600 mb-3">${template.description}</p>
-            <button
-                onclick="loadTemplate('${template.id}')"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 px-4 rounded transition-colors"
-            >
-                Load Template
-            </button>
-        `;
-        grid.appendChild(card);
-    });
-
-    modal.classList.remove('hidden');
-}
-
-function hideTemplatesModal() {
-    const modal = document.getElementById('templatesModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-function loadTemplate(templateId) {
-    const templates = window.agentTemplates || [];
-    const template = templates.find(t => t.id === templateId);
-    if (!template) return;
-
-    // Confirm before loading
-    if (agentConfig.projectName || knowledgeBases.length > 0) {
-        const confirmed = confirm('Loading a template will replace your current work. Continue?');
-        if (!confirmed) return;
-    }
-
-    // Load configuration
-    Object.assign(agentConfig, template.config);
-
-    // Load knowledge bases
-    knowledgeBases = template.knowledgeBases.map((kb, index) => ({
-        ...kb,
-        id: index,
-        customToolName: '',
-        customToolDescription: ''
-    }));
-    kbCounter = knowledgeBases.length;
-
-    // Load outputs from template
-    if (template.outputs && template.outputs.length > 0) {
-        outputs = template.outputs.map((output, index) => ({
-            id: `output-${index + 1}`,
-            outputName: sanitizeFunctionName(output.outputName || ''),
-            functionName: sanitizeFunctionName(output.functionName || ''),
-            functionDescription: output.functionDescription || '',
-            outputType: output.outputType || 'custom',
-            artifactType: output.artifactType || 'text',
-            jsonSchema: output.jsonSchema || '',
-            // Custom fields for editing
-            customFunctionName: sanitizeFunctionName(output.functionName || ''),
-            customFunctionDescription: output.functionDescription || '',
-            customJsonSchema: output.jsonSchema || ''
-        }));
-        outputCounter = outputs.length;
-        console.log(`✅ Loaded ${outputs.length} outputs from template`);
-    } else {
-        outputs = [];
-        outputCounter = 0;
-    }
-
-    // Reset other fields
-    additionalTools = [];
-    promptVariables = [];
-
-    // Populate UI
-    populateFieldsFromConfig();
-    renderKnowledgeBases();
-
-    // Close modal
-    hideTemplatesModal();
-
-    // Show success message
-    showToast(`Template loaded successfully\n${template.name} is ready to customize`, 'success');
-
-    // Save to auto-save
-    saveToLocalStorage();
-
-    // Update progress
-    updateProgressBar();
-}
-
 function populateFieldsFromConfig() {
     // Step 0/1 fields
     const projectName = document.getElementById('projectName');

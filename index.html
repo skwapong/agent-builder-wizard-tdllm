@@ -559,38 +559,6 @@
         </div>
     </div>
 
-    <!-- Templates Modal -->
-    <div id="templatesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full mx-4 my-8">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-bold text-gray-900">📋 Agent Templates</h3>
-                <button id="closeTemplatesModalBtn" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <p class="text-gray-600 mb-6">Choose a pre-configured template to get started quickly. All fields can be customized after loading.</p>
-
-            <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-                <!-- Templates will be dynamically loaded here -->
-            </div>
-
-            <div class="mt-6 flex justify-between items-center">
-                <a href="https://github.com/skwapong/PM-Agent-Squad-Master/issues/new?labels=template-submission&template=template_submission.md&title=%5BTemplate%5D+" target="_blank" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Submit Your Template
-                </a>
-                <button id="cancelTemplateBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
         <div class="text-center mb-8">
@@ -625,14 +593,6 @@
                     title="Configure API Key"
                 >
                     <span id="apiStatusIndicator">🔴</span> API Settings
-                </button>
-
-                <button
-                    id="templatesBtn"
-                    class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors"
-                    title="Load Agent Templates"
-                >
-                    📋 Templates
                 </button>
 
                 <button
@@ -2173,7 +2133,6 @@ The agent should be strategic, data-driven, and provide actionable recommendatio
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="config-helper.js"></script>
     <script src="td-llm-api.js"></script>
-    <script src="agent-templates.js"></script>
     <script src="wizard-ai.js?v=20251205-tdllm"></script>
 </body>
 </html>
