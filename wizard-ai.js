@@ -12693,8 +12693,8 @@ function importCommunityAgent(agentId) {
 
         showToast(`Imported "${agent.name}" successfully!`, 'success');
 
-        // Optionally save to local repository
-        const savedAgents = JSON.parse(localStorage.getItem('td_saved_agents') || '[]');
+        // Optionally save to local repository - use getSavedAgents/setSavedAgents for correct key
+        const savedAgents = getSavedAgents();
         const exists = savedAgents.some(a => a.id === agentId || a.name === agent.name);
 
         if (!exists) {
@@ -12707,7 +12707,7 @@ function importCommunityAgent(agentId) {
                 source: 'community',
                 data: agent.data
             });
-            localStorage.setItem('td_saved_agents', JSON.stringify(savedAgents));
+            setSavedAgents(savedAgents);
         }
 
     } catch (error) {
@@ -12721,8 +12721,8 @@ function openPublishAgentModal() {
     const modal = document.getElementById('publishAgentModal');
     const select = document.getElementById('publishAgentSelect');
 
-    // Populate saved agents dropdown
-    const savedAgents = JSON.parse(localStorage.getItem('td_saved_agents') || '[]');
+    // Populate saved agents dropdown - use getSavedAgents() for correct key
+    const savedAgents = getSavedAgents();
     select.innerHTML = '<option value="">-- Select a saved agent --</option>' +
         '<option value="current">📝 Current Configuration</option>' +
         savedAgents.map(agent => `<option value="${agent.id}">${escapeHtml(agent.name)}</option>`).join('');
@@ -12773,8 +12773,8 @@ async function publishAgentToCommunity() {
         agentName = agentConfig.agentName || 'Untitled Agent';
         agentDescription = agentConfig.projectDescription || '';
     } else {
-        // Get from saved agents
-        const savedAgents = JSON.parse(localStorage.getItem('td_saved_agents') || '[]');
+        // Get from saved agents - use getSavedAgents() for correct key
+        const savedAgents = getSavedAgents();
         const savedAgent = savedAgents.find(a => a.id === agentSelect.value);
         if (!savedAgent) {
             showToast('Agent not found', 'error');
