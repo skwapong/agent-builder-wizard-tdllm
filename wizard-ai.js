@@ -12450,6 +12450,66 @@ document.addEventListener('DOMContentLoaded', function() {
 let communityAgentsCache = null;
 let communityAgentsLastFetch = 0;
 const COMMUNITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const COMMUNITY_ADMIN_KEY = 'td_community_admin_auth';
+
+// Check if user is community admin
+function isCommunityAdmin() {
+    return sessionStorage.getItem(COMMUNITY_ADMIN_KEY) === 'authenticated';
+}
+
+// Authenticate as community admin
+function authenticateCommunityAdmin() {
+    const password = prompt('Enter admin password to enable delete functionality:');
+    if (password === '!PMAgentSquadAdmin!') {
+        sessionStorage.setItem(COMMUNITY_ADMIN_KEY, 'authenticated');
+        showToast('Admin mode enabled - you can now delete community agents', 'success');
+        // Refresh the display to show delete buttons
+        if (communityAgentsCache) {
+            displayCommunityAgents(communityAgentsCache);
+        }
+        return true;
+    } else if (password !== null) {
+        showToast('Incorrect admin password', 'error');
+    }
+    return false;
+}
+
+// Logout from admin mode
+function logoutCommunityAdmin() {
+    sessionStorage.removeItem(COMMUNITY_ADMIN_KEY);
+    showToast('Admin mode disabled', 'info');
+    updateAdminButton();
+    if (communityAgentsCache) {
+        displayCommunityAgents(communityAgentsCache);
+    }
+}
+
+// Toggle admin mode
+function toggleCommunityAdmin() {
+    if (isCommunityAdmin()) {
+        logoutCommunityAdmin();
+    } else {
+        if (authenticateCommunityAdmin()) {
+            updateAdminButton();
+        }
+    }
+}
+
+// Update admin button appearance
+function updateAdminButton() {
+    const btn = document.getElementById('adminToggleBtn');
+    if (btn) {
+        if (isCommunityAdmin()) {
+            btn.innerHTML = '🔓 Logout Admin';
+            btn.classList.remove('bg-gray-200', 'text-gray-600');
+            btn.classList.add('bg-red-100', 'text-red-600');
+        } else {
+            btn.innerHTML = '🔐 Admin';
+            btn.classList.remove('bg-red-100', 'text-red-600');
+            btn.classList.add('bg-gray-200', 'text-gray-600');
+        }
+    }
+}
 
 // Get the base URL for community-agents.json
 function getCommunityAgentsUrl() {
@@ -12471,6 +12531,7 @@ function getCommunityAgentsUrl() {
 function openCommunityGalleryModal() {
     const modal = document.getElementById('communityGalleryModal');
     modal.classList.remove('hidden');
+    updateAdminButton(); // Update admin button state
     loadCommunityAgents();
 }
 
@@ -12571,13 +12632,22 @@ function displayCommunityAgents(agents) {
         return;
     }
 
+    const isAdmin = isCommunityAdmin();
+
     listDiv.innerHTML = filtered.map(agent => `
         <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <div class="flex justify-between items-start mb-2">
                 <h4 class="font-semibold text-gray-900">${escapeHtml(agent.name)}</h4>
-                <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                    ${escapeHtml(agent.data?.agentConfig?.domain || 'general')}
-                </span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                        ${escapeHtml(agent.data?.agentConfig?.domain || 'general')}
+                    </span>
+                    ${isAdmin ? `
+                        <button onclick="deleteCommunityAgent('${agent.id}')" class="text-red-500 hover:text-red-700 text-sm" title="Delete agent (Admin)">
+                            🗑️
+                        </button>
+                    ` : ''}
+                </div>
             </div>
             <p class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(agent.description)}</p>
             <div class="flex flex-wrap gap-1 mb-3">
@@ -12845,6 +12915,57 @@ async function publishAgentToCommunity() {
         errorDiv.classList.remove('hidden');
         document.getElementById('publishErrorMessage').textContent = error.message;
         document.getElementById('publishConfirmBtn').disabled = false;
+    }
+}
+
+// Delete a community agent (admin only)
+async function deleteCommunityAgent(agentId) {
+    // Double-check admin status
+    if (!isCommunityAdmin()) {
+        showToast('Admin access required to delete agents', 'error');
+        return;
+    }
+
+    const agent = communityAgentsCache?.find(a => a.id === agentId);
+    if (!agent) {
+        showToast('Agent not found', 'error');
+        return;
+    }
+
+    // Confirm deletion
+    const confirmed = confirm(`Are you sure you want to delete "${agent.name}"?\n\nThis action cannot be undone.`);
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        showToast('Deleting agent...', 'info');
+
+        const response = await fetch('/api/community/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                agentId: agentId,
+                adminPassword: '!PMAgentSquadAdmin!'
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to delete agent');
+        }
+
+        // Clear cache and refresh
+        communityAgentsCache = null;
+        showToast(`Deleted "${agent.name}" successfully`, 'success');
+        loadCommunityAgents(true);
+
+    } catch (error) {
+        console.error('Failed to delete agent:', error);
+        showToast('Failed to delete: ' + error.message, 'error');
     }
 }
 

@@ -2072,12 +2072,17 @@ The agent should be strategic, data-driven, and provide actionable recommendatio
             </div>
 
             <div class="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-                <button onclick="openPublishAgentModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                    Publish Your Agent
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openPublishAgentModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Publish Your Agent
+                    </button>
+                    <button id="adminToggleBtn" onclick="toggleCommunityAdmin()" class="px-3 py-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg transition-colors" title="Admin Login">
+                        🔐 Admin
+                    </button>
+                </div>
                 <button onclick="closeCommunityGalleryModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
                     Close
                 </button>
