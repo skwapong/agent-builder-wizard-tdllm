@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2025-12-09T14:13:13.596Z",
+  "lastUpdated": "2025-12-09T14:18:52.013Z",
   "agents": [
     {
       "id": "community_1765289593596_6y4pp9u39",
@@ -122,57 +122,6 @@
             "customFunctionName": "generate_performance_visualization",
             "customFunctionDescription": "Create interactive performance visualizations using Plotly including trend charts, funnel analysis, channel comparison, and optimization opportunity dashboards",
             "customJsonSchema": "{\"type\": \"object\", \"properties\": {\"data\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"x\": {\"type\": \"array\"}, \"y\": {\"type\": \"array\"}, \"type\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"marker\": {\"type\": \"object\"}}}}, \"layout\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"xaxis\": {\"type\": \"object\"}, \"yaxis\": {\"type\": \"object\"}, \"showlegend\": {\"type\": \"boolean\"}}}}, \"required\": [\"data\", \"layout\"]}"
-          }
-        ],
-        "promptVariables": []
-      }
-    },
-    {
-      "id": "community_1",
-      "name": "Campaign Planning Expert",
-      "description": "Helps marketers plan comprehensive marketing campaigns across Meta, Google, TikTok, and other platforms. Includes budget allocation, audience targeting, and creative strategy.",
-      "author": "TD Agent Builder Team",
-      "tags": [
-        "marketing",
-        "campaign",
-        "paid-media",
-        "planning"
-      ],
-      "downloads": 0,
-      "publishedAt": "2024-12-09T00:00:00Z",
-      "data": {
-        "version": "1.0",
-        "agentConfig": {
-          "domain": "marketing",
-          "agentName": "Campaign Planning Expert",
-          "projectName": "Campaign Planning System",
-          "projectDescription": "AI-powered campaign planning assistant for marketers",
-          "model": "anthropic.claude-4.5-sonnet",
-          "temperature": 0.7,
-          "maxToolsIterations": 3,
-          "systemPrompt": "You are a Campaign Planning Expert, a strategic marketing advisor specializing in comprehensive campaign planning across multiple advertising platforms.\n\n## Your Expertise\n\nYou help marketers with:\n- Campaign strategy and goal setting (awareness, consideration, conversion)\n- Audience targeting and segmentation strategies\n- Budget allocation across platforms (Meta, Google, TikTok, Pinterest, LinkedIn)\n- Creative direction and messaging frameworks\n- KPI definition and performance benchmarks\n- Timeline planning and milestone setting\n\n## How You Work\n\n1. **Understand the Goal**: Ask clarifying questions about campaign objectives, target audience, and budget constraints\n2. **Analyze the Situation**: Consider industry benchmarks, platform strengths, and audience behavior\n3. **Provide Recommendations**: Offer data-driven, actionable recommendations with clear rationale\n4. **Support Execution**: Help with creative briefs, targeting parameters, and optimization strategies\n\n## Communication Style\n\n- Professional and consultative\n- Data-driven with industry benchmarks\n- Actionable and specific recommendations\n- Proactive in identifying potential issues\n\n## Limitations\n\n- I provide strategic guidance, not account management\n- I don't have access to live campaign data\n- Always recommend testing and iteration"
-        },
-        "knowledgeBases": [
-          {
-            "id": "kb-1",
-            "name": "Campaign Planning Framework",
-            "content": "# Campaign Planning Framework\n\n## Campaign Objectives\n- Awareness: Brand lift, reach, impressions\n- Consideration: Traffic, engagement, video views\n- Conversion: Leads, sales, app installs\n\n## Budget Allocation Best Practices\n- 70% to proven channels, 30% to testing\n- Allocate based on historical ROAS\n- Consider seasonality and competition"
-          },
-          {
-            "id": "kb-2",
-            "name": "Platform Best Practices",
-            "content": "# Platform Best Practices\n\n## Meta (Facebook/Instagram)\n- Strong for awareness and retargeting\n- Use Advantage+ for automation\n- Broad targeting often outperforms narrow\n\n## Google Ads\n- Search for high-intent capture\n- Performance Max for full-funnel\n- YouTube for awareness at scale\n\n## TikTok\n- Native, authentic creative performs best\n- Spark Ads leverage organic content\n- Strong for Gen Z and Millennial reach"
-          }
-        ],
-        "additionalTools": [],
-        "outputs": [
-          {
-            "id": "output-1",
-            "outputName": "campaign_plan",
-            "functionName": "generate_campaign_plan",
-            "functionDescription": "Generate a comprehensive campaign plan with objectives, targeting, budget, and timeline",
-            "outputType": "custom",
-            "customJsonSchema": "{\"type\": \"object\", \"properties\": {\"objective\": {\"type\": \"string\"}, \"budget\": {\"type\": \"object\"}, \"targeting\": {\"type\": \"object\"}, \"timeline\": {\"type\": \"string\"}}}"
           }
         ],
         "promptVariables": []
