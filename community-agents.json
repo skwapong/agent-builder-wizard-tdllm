@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2025-12-09T14:18:56.949Z",
+  "lastUpdated": "2025-12-09T14:19:01.722Z",
   "agents": [
     {
       "id": "community_1765289593596_6y4pp9u39",
@@ -124,43 +124,6 @@
             "customJsonSchema": "{\"type\": \"object\", \"properties\": {\"data\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"x\": {\"type\": \"array\"}, \"y\": {\"type\": \"array\"}, \"type\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"marker\": {\"type\": \"object\"}}}}, \"layout\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"xaxis\": {\"type\": \"object\"}, \"yaxis\": {\"type\": \"object\"}, \"showlegend\": {\"type\": \"boolean\"}}}}, \"required\": [\"data\", \"layout\"]}"
           }
         ],
-        "promptVariables": []
-      }
-    },
-    {
-      "id": "community_2",
-      "name": "HR Policy Assistant",
-      "description": "Answers employee questions about company policies, benefits, PTO, and HR procedures. Configurable with your company's specific policies.",
-      "author": "TD Agent Builder Team",
-      "tags": [
-        "hr",
-        "employee",
-        "policies",
-        "benefits"
-      ],
-      "downloads": 0,
-      "publishedAt": "2024-12-09T00:00:00Z",
-      "data": {
-        "version": "1.0",
-        "agentConfig": {
-          "domain": "hr",
-          "agentName": "HR Policy Assistant",
-          "projectName": "Employee HR Support",
-          "projectDescription": "AI assistant for employee HR questions and policy inquiries",
-          "model": "anthropic.claude-3-5-haiku-20241022-v1:0",
-          "temperature": 0.3,
-          "maxToolsIterations": 2,
-          "systemPrompt": "You are an HR Policy Assistant, helping employees find answers to their HR-related questions.\n\n## Your Role\n\nYou help employees with:\n- Understanding company policies and procedures\n- Benefits information (health, dental, vision, 401k)\n- PTO policies and leave requests\n- Onboarding and offboarding processes\n- Workplace guidelines and code of conduct\n\n## How You Respond\n\n1. Answer questions based on the knowledge base content\n2. Be clear and accurate - employees rely on this information\n3. When unsure, direct employees to HR for clarification\n4. Maintain confidentiality and professionalism\n\n## Important Guidelines\n\n- Never provide legal advice\n- Direct sensitive issues to HR directly\n- Be empathetic but factual\n- Always cite the relevant policy when possible"
-        },
-        "knowledgeBases": [
-          {
-            "id": "kb-1",
-            "name": "Employee Handbook",
-            "content": "# Employee Handbook\n\n## PTO Policy\n- Full-time employees receive 15 days PTO annually\n- PTO accrues monthly at 1.25 days/month\n- Unused PTO carries over up to 5 days\n\n## Benefits\n- Health insurance: Company covers 80% of premium\n- 401k: 4% company match\n- Wellness stipend: $100/month"
-          }
-        ],
-        "additionalTools": [],
-        "outputs": [],
         "promptVariables": []
       }
     }
