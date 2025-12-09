@@ -12453,7 +12453,7 @@ const COMMUNITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Get the base URL for community-agents.json
 function getCommunityAgentsUrl() {
-    // Check if we're on GitHub Pages or local
+    // Check if we're on localhost for development
     const isLocalhost = window.location.hostname === 'localhost' ||
                        window.location.hostname === '127.0.0.1' ||
                        window.location.protocol === 'file:';
@@ -12462,9 +12462,9 @@ function getCommunityAgentsUrl() {
         return 'community-agents.json';
     }
 
-    // For production - use relative URL or GitHub raw URL
-    // This will be served from the same domain
-    return 'community-agents.json';
+    // For production - always fetch from GitHub to get latest published agents
+    // This ensures newly published agents appear immediately
+    return 'https://raw.githubusercontent.com/skwapong/TD-Agent-Builder/main/community-agents.json';
 }
 
 // Open Community Gallery Modal
