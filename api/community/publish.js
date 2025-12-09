@@ -79,8 +79,9 @@ module.exports = async function handler(req, res) {
         }
 
         // Get GitHub credentials from environment
-        const githubToken = process.env.GITHUB_TOKEN;
-        const githubRepo = process.env.GITHUB_REPO || 'skwapong/TD-Agent-Builder';
+        // Trim to remove any trailing newlines or whitespace
+        const githubToken = (process.env.GITHUB_TOKEN || '').trim();
+        const githubRepo = (process.env.GITHUB_REPO || 'skwapong/TD-Agent-Builder').trim();
 
         if (!githubToken) {
             console.error('GITHUB_TOKEN not configured');
