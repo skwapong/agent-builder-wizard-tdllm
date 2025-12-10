@@ -15,8 +15,6 @@
         }
     </script>
     <link rel="stylesheet" href="td-theme.css">
-    <!-- Vercel Analytics -->
-    <script defer src="https://va.vercel-scripts.com/v1/script.js"></script>
     <style>
         /* Prose-like styling for chat messages */
         .prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 600; margin-top: 0.5em; margin-bottom: 0.25em; }
@@ -2254,5 +2252,11 @@ The agent should be strategic, data-driven, and provide actionable recommendatio
     <script src="td-llm-api.js"></script>
     <script src="usage-tracker.js"></script>
     <script src="wizard-ai.js?v=20251210-usage"></script>
+
+    <!-- Vercel Web Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
