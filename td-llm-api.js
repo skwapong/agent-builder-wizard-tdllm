@@ -632,6 +632,18 @@ class TDLLMAPI {
         }
 
         console.log('✅ Response complete:', fullText.length, 'chars');
+
+        // Track API call event
+        if (window.UsageTracker) {
+            // Estimate tokens: ~4 chars per token
+            const estimatedTokens = Math.ceil(fullText.length / 4);
+            window.UsageTracker.trackEvent('api_call', {
+                model: this.model,
+                responseLength: fullText.length,
+                tokens: estimatedTokens
+            });
+        }
+
         return fullText;
     }
 

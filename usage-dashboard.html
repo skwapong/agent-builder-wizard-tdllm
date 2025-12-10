@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usage Dashboard - Agent Builder Wizard</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .event-row {
+            transition: background-color 0.15s ease;
+        }
+        .event-row:hover {
+            background-color: #f3f4f6;
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="favicon.ico" alt="TD" class="w-10 h-10">
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            Usage Dashboard
+                        </h1>
+                        <p class="text-sm text-gray-600">Agent Builder Wizard Analytics</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="lastUpdated" class="text-xs text-gray-500"></span>
+                    <button onclick="refreshData()" class="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
+                        🔄 Refresh
+                    </button>
+                    <button onclick="exportData()" class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium">
+                        📤 Export
+                    </button>
+                    <a href="index.html" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium">
+                        ← Back to Wizard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Key Metrics Grid -->
+        <section class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">📊 Key Metrics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Total Sessions -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">👤</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">Sessions</span>
+                    </div>
+                    <div id="totalSessions" class="text-3xl font-bold text-gray-900">--</div>
+                    <div id="todaySessions" class="text-xs text-green-600 mt-1">+0 today</div>
+                </div>
+
+                <!-- Agents Generated -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">🤖</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">Generated</span>
+                    </div>
+                    <div id="agentsGenerated" class="text-3xl font-bold text-indigo-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">agents created</div>
+                </div>
+
+                <!-- Agents Imported -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">📥</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">Imported</span>
+                    </div>
+                    <div id="agentsImported" class="text-3xl font-bold text-emerald-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">from community</div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">💬</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">Messages</span>
+                    </div>
+                    <div id="chatMessages" class="text-3xl font-bold text-blue-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">AI conversations</div>
+                </div>
+
+                <!-- API Calls -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">🔄</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">API Calls</span>
+                    </div>
+                    <div id="apiCalls" class="text-3xl font-bold text-purple-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">to TD LLM</div>
+                </div>
+
+                <!-- Tokens Used -->
+                <div class="stat-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">🎯</span>
+                        <span class="text-xs font-medium text-gray-500 uppercase">Tokens</span>
+                    </div>
+                    <div id="totalTokens" class="text-3xl font-bold text-amber-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">estimated</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Daily Activity Chart -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">📈 Daily Activity (Last 14 Days)</h3>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hourly Distribution Chart -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">⏰ Activity by Hour</h3>
+                <div class="chart-container">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Types Breakdown -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Event Types Pie Chart -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🎨 Event Types</h3>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="eventTypesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">⚡ Quick Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">First Visit</span>
+                        <span id="firstVisit" class="text-sm font-semibold text-gray-900">--</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Last Visit</span>
+                        <span id="lastVisit" class="text-sm font-semibold text-gray-900">--</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Peak Hour</span>
+                        <span id="peakHour" class="text-sm font-semibold text-gray-900">--</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Avg Daily Events</span>
+                        <span id="avgDailyEvents" class="text-sm font-semibold text-gray-900">--</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                        <span class="text-sm text-indigo-700">Total Events</span>
+                        <span id="totalEvents" class="text-sm font-bold text-indigo-900">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Created -->
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">📦 Content Created</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📚</span>
+                            <span class="text-sm font-medium text-gray-700">Knowledge Bases</span>
+                        </div>
+                        <span id="kbsCreated" class="text-xl font-bold text-indigo-600">--</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📤</span>
+                            <span class="text-sm font-medium text-gray-700">Outputs</span>
+                        </div>
+                        <span id="outputsCreated" class="text-xl font-bold text-emerald-600">--</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🔧</span>
+                            <span class="text-sm font-medium text-gray-700">Tools Added</span>
+                        </div>
+                        <span id="toolsAdded" class="text-xl font-bold text-blue-600">--</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">💾</span>
+                            <span class="text-sm font-medium text-gray-700">Agents Saved</span>
+                        </div>
+                        <span id="agentsSaved" class="text-xl font-bold text-amber-600">--</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🌐</span>
+                            <span class="text-sm font-medium text-gray-700">Published</span>
+                        </div>
+                        <span id="agentsPublished" class="text-xl font-bold text-purple-600">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Events Table -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">📋 Recent Events</h3>
+                    <div class="flex items-center gap-2">
+                        <select id="eventFilter" onchange="filterEvents()" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">All Events</option>
+                            <option value="session_start">Sessions</option>
+                            <option value="agent_generated">Agent Generated</option>
+                            <option value="chat_message">Chat Messages</option>
+                            <option value="api_call">API Calls</option>
+                            <option value="agent_imported">Imports</option>
+                        </select>
+                        <button onclick="clearData()" class="text-xs text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                            🗑️ Clear Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                        <tr>
+                            <th class="px-6 py-3 text-left">Time</th>
+                            <th class="px-6 py-3 text-left">Event</th>
+                            <th class="px-6 py-3 text-left">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTable" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="3" class="px-6 py-12 text-center text-gray-400">
+                                Loading events...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 bg-gray-50 border-t border-gray-100 text-center">
+                <span id="eventCount" class="text-sm text-gray-500">Showing 0 events</span>
+            </div>
+        </section>
+
+        <!-- Vercel Analytics Link -->
+        <section class="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-1">🚀 Vercel Analytics</h3>
+                    <p class="text-indigo-100 text-sm">View real-time analytics, page views, and visitor data in your Vercel dashboard.</p>
+                </div>
+                <a href="https://vercel.com/sam-kwapongs-projects/agent-foundry-assistant/analytics" target="_blank"
+                   class="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors">
+                    Open Vercel Analytics →
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-sm text-gray-500">
+                <p>Agent Builder Wizard Usage Dashboard • Data stored locally in your browser</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="usage-tracker.js"></script>
+    <script>
+        let dailyChart, hourlyChart, eventTypesChart;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            // Auto-refresh every 30 seconds
+            setInterval(refreshData, 30000);
+        });
+
+        // Refresh all data
+        function refreshData() {
+            const summary = UsageTracker.getSummary();
+            if (!summary) {
+                console.log('No usage data available');
+                return;
+            }
+
+            updateMetrics(summary);
+            updateCharts(summary);
+            updateEventsTable(summary.recentEvents);
+            document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        }
+
+        // Update metric cards
+        function updateMetrics(summary) {
+            document.getElementById('totalSessions').textContent = formatNumber(summary.totalSessions);
+            document.getElementById('todaySessions').textContent = '+' + (summary.todayStats?.sessions || 0) + ' today';
+            document.getElementById('agentsGenerated').textContent = formatNumber(summary.agentsGenerated);
+            document.getElementById('agentsImported').textContent = formatNumber(summary.agentsImported);
+            document.getElementById('chatMessages').textContent = formatNumber(summary.chatMessages);
+            document.getElementById('apiCalls').textContent = formatNumber(summary.apiCalls);
+            document.getElementById('totalTokens').textContent = formatNumber(summary.totalTokensUsed);
+
+            document.getElementById('firstVisit').textContent = formatDate(summary.firstVisit);
+            document.getElementById('lastVisit').textContent = formatDate(summary.lastVisit);
+            document.getElementById('peakHour').textContent = formatHour(summary.peakHour);
+            document.getElementById('avgDailyEvents').textContent = summary.avgDailyEvents;
+            document.getElementById('totalEvents').textContent = formatNumber(summary.totalEvents);
+
+            document.getElementById('kbsCreated').textContent = summary.kbsCreated || 0;
+            document.getElementById('outputsCreated').textContent = summary.outputsCreated || 0;
+            document.getElementById('toolsAdded').textContent = summary.toolsAdded || 0;
+            document.getElementById('agentsSaved').textContent = summary.agentsSaved || 0;
+            document.getElementById('agentsPublished').textContent = summary.agentsPublished || 0;
+        }
+
+        // Update charts
+        function updateCharts(summary) {
+            // Daily Activity Chart
+            const last14Days = getLast14Days();
+            const dailyData = last14Days.map(date => summary.dailyStats[date]?.events || 0);
+
+            if (dailyChart) dailyChart.destroy();
+            dailyChart = new Chart(document.getElementById('dailyChart'), {
+                type: 'line',
+                data: {
+                    labels: last14Days.map(d => formatShortDate(d)),
+                    datasets: [{
+                        label: 'Events',
+                        data: dailyData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Hourly Distribution Chart
+            if (hourlyChart) hourlyChart.destroy();
+            hourlyChart = new Chart(document.getElementById('hourlyChart'), {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => formatHour(i)),
+                    datasets: [{
+                        label: 'Activity',
+                        data: summary.hourlyDistribution,
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Event Types Chart
+            const eventCounts = {};
+            summary.recentEvents.forEach(e => {
+                eventCounts[e.type] = (eventCounts[e.type] || 0) + 1;
+            });
+
+            const sortedTypes = Object.entries(eventCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+            if (eventTypesChart) eventTypesChart.destroy();
+            eventTypesChart = new Chart(document.getElementById('eventTypesChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: sortedTypes.map(([type]) => formatEventType(type)),
+                    datasets: [{
+                        data: sortedTypes.map(([, count]) => count),
+                        backgroundColor: [
+                            '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 8, font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update events table
+        function updateEventsTable(events, filter = '') {
+            const tbody = document.getElementById('eventsTable');
+            const filteredEvents = filter ? events.filter(e => e.type === filter) : events;
+
+            if (filteredEvents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center text-gray-400">
+                            No events recorded yet. Start using the Agent Builder to see activity here.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('eventCount').textContent = 'No events';
+                return;
+            }
+
+            tbody.innerHTML = filteredEvents.slice(0, 50).map(event => `
+                <tr class="event-row">
+                    <td class="px-6 py-3 text-sm text-gray-500 whitespace-nowrap">
+                        ${formatDateTime(event.timestamp)}
+                    </td>
+                    <td class="px-6 py-3">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getEventBadgeClass(event.type)}">
+                            ${getEventIcon(event.type)} ${formatEventType(event.type)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-3 text-sm text-gray-600">
+                        ${formatEventDetails(event.details)}
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('eventCount').textContent = `Showing ${Math.min(filteredEvents.length, 50)} of ${filteredEvents.length} events`;
+        }
+
+        // Filter events
+        function filterEvents() {
+            const filter = document.getElementById('eventFilter').value;
+            const summary = UsageTracker.getSummary();
+            if (summary) {
+                updateEventsTable(summary.recentEvents, filter);
+            }
+        }
+
+        // Export data
+        function exportData() {
+            UsageTracker.exportData();
+        }
+
+        // Clear data
+        function clearData() {
+            if (confirm('Are you sure you want to clear all usage data? This cannot be undone.')) {
+                UsageTracker.clearData();
+                refreshData();
+            }
+        }
+
+        // Helper functions
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return (num || 0).toString();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '--';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatShortDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function formatHour(hour) {
+            if (hour === 0) return '12am';
+            if (hour === 12) return '12pm';
+            return hour < 12 ? hour + 'am' : (hour - 12) + 'pm';
+        }
+
+        function getLast14Days() {
+            const days = [];
+            for (let i = 13; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.toISOString().split('T')[0]);
+            }
+            return days;
+        }
+
+        function formatEventType(type) {
+            return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getEventIcon(type) {
+            const icons = {
+                'session_start': '👤',
+                'agent_generated': '🤖',
+                'agent_imported': '📥',
+                'agent_saved': '💾',
+                'agent_published': '🌐',
+                'agent_exported': '📤',
+                'chat_message': '💬',
+                'api_call': '🔄',
+                'kb_created': '📚',
+                'output_created': '📤',
+                'tool_added': '🔧'
+            };
+            return icons[type] || '📌';
+        }
+
+        function getEventBadgeClass(type) {
+            const classes = {
+                'session_start': 'bg-gray-100 text-gray-700',
+                'agent_generated': 'bg-indigo-100 text-indigo-700',
+                'agent_imported': 'bg-emerald-100 text-emerald-700',
+                'agent_saved': 'bg-amber-100 text-amber-700',
+                'agent_published': 'bg-purple-100 text-purple-700',
+                'chat_message': 'bg-blue-100 text-blue-700',
+                'api_call': 'bg-pink-100 text-pink-700'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-700';
+        }
+
+        function formatEventDetails(details) {
+            if (!details || Object.keys(details).length === 0) return '-';
+            const entries = Object.entries(details).slice(0, 3);
+            return entries.map(([key, value]) => {
+                if (typeof value === 'string' && value.length > 50) {
+                    value = value.substring(0, 50) + '...';
+                }
+                return `<span class="text-gray-400">${key}:</span> ${value}`;
+            }).join(' • ');
+        }
+    </script>
+</body>
+</html>

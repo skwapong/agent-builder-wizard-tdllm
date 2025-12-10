@@ -15,6 +15,8 @@
         }
     </script>
     <link rel="stylesheet" href="td-theme.css">
+    <!-- Vercel Analytics -->
+    <script defer src="https://va.vercel-scripts.com/v1/script.js"></script>
     <style>
         /* Prose-like styling for chat messages */
         .prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 600; margin-top: 0.5em; margin-bottom: 0.25em; }
@@ -634,6 +636,14 @@
                 >
                     🌐 Community
                 </button>
+
+                <a
+                    href="usage-dashboard.html"
+                    class="text-xs bg-gradient-to-r from-slate-500 to-gray-600 hover:from-slate-600 hover:to-gray-700 text-white px-3 py-1 rounded-full transition-colors shadow-sm"
+                    title="View Usage Dashboard"
+                >
+                    📊 Analytics
+                </a>
             </div>
         </div>
 
@@ -2242,6 +2252,7 @@ The agent should be strategic, data-driven, and provide actionable recommendatio
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="config-helper.js"></script>
     <script src="td-llm-api.js"></script>
-    <script src="wizard-ai.js?v=20251205-tdllm"></script>
+    <script src="usage-tracker.js"></script>
+    <script src="wizard-ai.js?v=20251210-usage"></script>
 </body>
 </html>

@@ -2832,6 +2832,14 @@ async function sendToAI() {
     addChatMessage('user', displayMessage);
     chatHistory.push({ role: 'user', content: fullMessage });
 
+    // Track chat message event
+    if (window.UsageTracker) {
+        UsageTracker.trackEvent('chat_message', {
+            messageLength: message.length,
+            hasAttachment: !!currentAttachment
+        });
+    }
+
     // Clear input and attachment (silent to avoid toast notification)
     input.value = '';
     clearAttachment(true);
@@ -3494,6 +3502,17 @@ async function generateAgent() {
         console.log(`📊 Estimated tokens - Input: ${estimatedInputTokens}, Output: ${estimatedOutputTokens}`);
         console.log(`📊 Total tokens used: ${wizardStats.totalTokensUsed.toLocaleString()}`);
         console.log(`📊 Estimated cost: $${wizardStats.estimatedCost.toFixed(4)}`);
+
+        // Track agent generation event
+        if (window.UsageTracker) {
+            UsageTracker.trackEvent('agent_generated', {
+                domain: agentConfig.domain,
+                kbCount: knowledgeBases.length,
+                model: agentConfig.model,
+                duration: aiDuration,
+                tokens: wizardStats.totalTokensUsed
+            });
+        }
 
         removeTypingIndicator();
         stopGenerationTimer(true);
@@ -6141,6 +6160,15 @@ function addKnowledgeBase(name = '', content = '', type = 'text') {
     knowledgeBases.push(newKB);
     renderKnowledgeBases();
 
+    // Track KB creation event
+    if (window.UsageTracker) {
+        UsageTracker.trackEvent('kb_created', {
+            kbName: name,
+            kbType: type,
+            contentLength: content.length
+        });
+    }
+
     console.log(`✅ Added KB: "${name}" (type: ${type}, ${content.length} chars)`);
 }
 
@@ -6192,6 +6220,15 @@ function addTool() {
     };
     additionalTools.push(newTool);
     renderTools();
+
+    // Track tool added event
+    if (window.UsageTracker) {
+        UsageTracker.trackEvent('tool_added', {
+            toolId: newTool.id,
+            toolType: newTool.type
+        });
+    }
+
     console.log(`✅ Added Tool: ${newTool.id}`);
 }
 
@@ -6659,6 +6696,15 @@ function addOutput() {
     };
     outputs.push(newOutput);
     renderOutputs();
+
+    // Track output creation event
+    if (window.UsageTracker) {
+        UsageTracker.trackEvent('output_created', {
+            outputId: newOutput.id,
+            outputType: newOutput.outputType
+        });
+    }
+
     console.log(`✅ Added Output: ${newOutput.id}`);
 }
 
@@ -8718,6 +8764,15 @@ async function downloadAllFilesAsZip() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
+        // Track agent exported event
+        if (window.UsageTracker) {
+            UsageTracker.trackEvent('agent_exported', {
+                agentName: agentSlug,
+                kbCount: knowledgeBases.length,
+                format: 'zip'
+            });
+        }
+
         // Calculate final statistics
         const totalTime = wizardStats.endTime && wizardStats.startTime
             ? formatDuration(wizardStats.endTime - wizardStats.startTime)
@@ -10379,6 +10434,15 @@ function confirmSaveAgent() {
 
     closeSaveAgentModal();
     showToast(`Agent "${name}" saved to repository`, 'success');
+
+    // Track agent save event
+    if (window.UsageTracker) {
+        UsageTracker.trackEvent('agent_saved', {
+            agentName: name,
+            kbCount: knowledgeBases.length,
+            tagsCount: tags.length
+        });
+    }
 
     // Update count if modal is visible
     updateSavedAgentsCount();
@@ -12688,6 +12752,15 @@ function importCommunityAgent(agentId) {
 
         showToast(`Imported "${agent.name}" successfully!`, 'success');
 
+        // Track agent import event
+        if (window.UsageTracker) {
+            UsageTracker.trackEvent('agent_imported', {
+                agentId: agentId,
+                agentName: agent.name,
+                author: agent.author || 'Unknown'
+            });
+        }
+
         // Optionally save to local repository - use getSavedAgents/setSavedAgents for correct key
         const savedAgents = getSavedAgents();
         const exists = savedAgents.some(a => a.id === agentId || a.name === agent.name);
@@ -12827,6 +12900,15 @@ async function publishAgentToCommunity() {
         communityAgentsCache = null;
 
         showToast('Agent published to community!', 'success');
+
+        // Track agent published event
+        if (window.UsageTracker) {
+            UsageTracker.trackEvent('agent_published', {
+                agentName: agentName,
+                category: category,
+                author: authorName
+            });
+        }
 
         // Close modal after delay
         setTimeout(() => {
